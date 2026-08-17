@@ -1,0 +1,54 @@
+name: kryptsig
+
+on:
+  schedule:
+    - cron: "7 * * * *"      # hourly, offset off the hour to dodge peak scheduling
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "run = normal poll | selftest = validate dependencies"
+        type: choice
+        default: run
+        options: [run, selftest]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kryptsig
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+
+      - name: Selftest
+        if: inputs.mode == 'selftest'
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          CG_API_KEY: ${{ secrets.CG_API_KEY }}
+        run: python kryptsig.py --selftest
+
+      - name: Poll and evaluate
+        if: inputs.mode != 'selftest'
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          CG_API_KEY: ${{ secrets.CG_API_KEY }}
+        run: python kryptsig.py
+
+      - name: Persist state and logs
+        if: always() && inputs.mode != 'selftest'
+        run: |
+          git config user.name  "kryptsig"
+          git config user.email "actions@github.com"
+          git add state.json observations.csv alerts.csv 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "poll $(date -u +%FT%TZ)"
+          for i in 1 2 3; do
+            git pull --rebase --autostash && git push && break
+            sleep 5
+          done
