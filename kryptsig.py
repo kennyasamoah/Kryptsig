@@ -31,31 +31,43 @@ from datetime import datetime, timezone
 # ======================================================================
 # UNIVERSE -- who gets watched. No momentum condition. That is the point.
 # ======================================================================
-MIN_LIQ_ABS      = 30_000        # hard floor in USD
-MIN_LIQ_RATIO    = 0.15          # ...and >= 15% of market cap
-MIN_AGE_DAYS     = 14
-MAX_MCAP         = 200_000_000   # raised; size_tier logs which band performs
+MAX_POSITION_USD = 250           # your actual max. Everything derives from this.
+MAX_POOL_PCT     = 0.02          # never exceed 2% of pool -- above that your
+                                 # own exit moves the price against you
+
+# $250 at 2% of pool => $12,500. Below this you cannot exit at a price you
+# would accept, at YOUR size. Not arbitrary -- derived.
+MIN_LIQ_ABS      = 12_500
+MIN_AGE_HOURS    = 6             # was 14 days. Target is now accumulation,
+                                 # not dormancy break -- but we still need
+                                 # enough candles for a baseline.
+MAX_MCAP         = 20_000_000    # tightened: asymmetry, not safety
 UNIVERSE_CAP     = 120
 
 # ======================================================================
 # SIGNAL -- loose on purpose during the logging phase.
 # ======================================================================
-SPIKE_MULTIPLE   = 4.0
-MIN_ABS_VOLUME   = 10_000
-MIN_PRICE_CHG_1H = 8.0
-MIN_BUYER_RATIO  = 1.2
-MIN_BUYER_MULT   = 3.0           # unique buyers vs their own 7d baseline
-MIN_TURNOVER     = 0.10          # 24h volume / mcap -- real activity for its size
+# The inversion that matters: we now require price to be moving, but NOT
+# to have already moved. Buyers arriving BEFORE price goes vertical is
+# accumulation. Buyers arriving AFTER is the crowd -- and the crowd is
+# somebody else's exit.
+SPIKE_MULTIPLE   = 3.0           # volume vs baseline
+MIN_ABS_VOLUME   = 5_000
+MIN_PRICE_CHG_1H = 2.0           # the ramp has started
+MAX_PRICE_CHG_1H = 60.0          # ...but has not gone vertical. THE CEILING.
+MAX_PRICE_CHG_24H = 300.0        # and did not already run yesterday
+MIN_BUYER_RATIO  = 1.3           # unique buyers vs sellers this hour
+MIN_BUYER_MULT   = 2.5           # unique buyers vs their own baseline
+MIN_TURNOVER     = 0.05
 
 # ======================================================================
 # SAFETY -- do not loosen. Protects your ability to exit.
 # ======================================================================
 MAX_FDV_MC_RATIO = 1.5
-POSITION_PCT     = 0.01          # never exceed 1% of pool liquidity
 
-COOLDOWN_HOURS     = 6
-BASELINE_HOURS     = 168         # 7 days of hourly candles
-MIN_BASELINE_OBS   = 48
+COOLDOWN_HOURS     = 4
+BASELINE_HOURS     = 168         # up to 7 days of hourly candles
+MIN_BASELINE_OBS   = 6           # young tokens have short histories
 BASELINE_MAX_AGE_H = 168         # refresh weekly (BUG 2)
 BACKFILL_BUDGET    = 2
 MAX_BACKFILL_TRIES = 3           # then give up (BUG 3)
@@ -198,6 +210,7 @@ def parse_pool(attrs):
         "vol_1h":    num((attrs.get("volume_usd") or {}).get("h1")),
         "vol_24h":   num((attrs.get("volume_usd") or {}).get("h24")),
         "chg_1h":    num((attrs.get("price_change_percentage") or {}).get("h1")),
+        "chg_24h":   num((attrs.get("price_change_percentage") or {}).get("h24")),
         "buyers":    tx1.get("buyers", 0) or 0,
         "sellers":   tx1.get("sellers", 0) or 0,
         "age_days":  round(age_days, 1),
@@ -205,30 +218,35 @@ def parse_pool(attrs):
     }
 
 
-def size_tier(mcap):
-    if mcap < 1_000_000:
-        return "micro"
-    if mcap < 20_000_000:
-        return "small"
-    return "mid"
+def risk_tier(liquidity):
+    """Liquidity no longer blocks. It sizes. You get the alert either way --
+    the tier tells you what you are taking on."""
+    pos = min(MAX_POSITION_USD, liquidity * MAX_POOL_PCT)
+    pct = pos / liquidity if liquidity else 1.0
+    if liquidity >= 100_000:
+        tier, note = "A", f"deep -- ${pos:,.0f} is {pct:.2%} of pool"
+    elif liquidity >= 50_000:
+        tier, note = "B", f"adequate -- ${pos:,.0f} is {pct:.2%} of pool"
+    elif liquidity >= 25_000:
+        tier, note = "C", f"thin -- ${pos:,.0f} is {pct:.1%} of pool"
+    else:
+        tier, note = "D", (f"VERY THIN -- ${pos:,.0f} is {pct:.1%} of pool, "
+                           f"expect real slippage")
+    return tier, pos, note
 
 
 def enrich(m):
     m["turnover"] = (m["vol_24h"] / m["mcap"]) if m["mcap"] else 0.0
-    m["tier"] = size_tier(m["mcap"])
+    m["tier"], m["max_pos"], m["tier_note"] = risk_tier(m["liquidity"])
     return m
 
 
 def liquidity_ok(m):
-    """Absolute floor AND a ratio that scales with market cap (BUG 6).
-    A $300k token with $50k pooled passes; with $12k pooled it does not."""
+    """Only the derived floor blocks now. Everything above it gets a tier
+    and a position cap instead of a rejection."""
     if m["liquidity"] < MIN_LIQ_ABS:
-        return False, f"liquidity ${m['liquidity']:,.0f} < ${MIN_LIQ_ABS:,} floor"
-    if m["mcap"] > 0:
-        ratio = m["liquidity"] / m["mcap"]
-        if ratio < MIN_LIQ_RATIO:
-            return False, (f"liquidity {ratio:.1%} of mcap "
-                           f"(need {MIN_LIQ_RATIO:.0%}) -- too thin to exit")
+        return False, (f"liquidity ${m['liquidity']:,.0f} -- a ${MAX_POSITION_USD} "
+                       f"position would be >{MAX_POOL_PCT:.0%} of the pool")
     return True, ""
 
 
@@ -236,8 +254,8 @@ def qualifies(m):
     ok, why = liquidity_ok(m)
     if not ok:
         return False, why
-    if m["age_days"] < MIN_AGE_DAYS:
-        return False, f"only {m['age_days']}d old (need {MIN_AGE_DAYS}d)"
+    if m["age_days"] * 24 < MIN_AGE_HOURS:
+        return False, f"only {m['age_days']*24:.1f}h old (need {MIN_AGE_HOURS}h)"
     if m["mcap"] > MAX_MCAP:
         return False, f"mcap ${m['mcap']:,.0f} too large"
     return True, "qualifies"
@@ -330,11 +348,10 @@ def needs_baseline(entry):
 
 
 def evaluate(m, baseline, last_alert, buyer_base=None):
+    """Fire on ACCUMULATION: buyers arriving BEFORE price goes vertical."""
     ok, why = liquidity_ok(m)
     if not ok:
         return False, why
-    if m["mcap"] and m["fdv"] and m["fdv"] / m["mcap"] > MAX_FDV_MC_RATIO:
-        return False, f"FDV/MC {m['fdv']/m['mcap']:.1f}x -- unlock overhang"
     if not baseline or baseline <= 0:
         return False, "no baseline yet"
 
@@ -346,14 +363,20 @@ def evaluate(m, baseline, last_alert, buyer_base=None):
     if mult < SPIKE_MULTIPLE:
         return False, f"{mult:.1f}x baseline (need {SPIKE_MULTIPLE}x)"
     if m["vol_1h"] < MIN_ABS_VOLUME:
-        return False, f"{mult:.1f}x but only ${m['vol_1h']:,.0f} -- too small"
-    if m["chg_1h"] < MIN_PRICE_CHG_1H:
-        return False, f"{mult:.1f}x volume, price only {m['chg_1h']:+.1f}%"
-    if ratio < MIN_BUYER_RATIO:
-        return False, f"{mult:.1f}x but buy/sell {ratio:.2f} -- distribution"
+        return False, f"{mult:.1f}x but only ${m['vol_1h']:,.0f}"
 
-    # New money, not the same wallets churning. Hardest metric to fake:
-    # inflating volume needs 2 wallets, inflating unique buyers needs 300.
+    # ---- THE CEILING: what separates early from somebody else's exit ----
+    if m["chg_1h"] < MIN_PRICE_CHG_1H:
+        return False, f"{mult:.1f}x volume, price flat ({m['chg_1h']:+.1f}%)"
+    if m["chg_1h"] > MAX_PRICE_CHG_1H:
+        return False, (f"TOO LATE -- already {m['chg_1h']:+.0f}% this hour "
+                       f"(ceiling +{MAX_PRICE_CHG_1H:.0f}%)")
+    if m["chg_24h"] > MAX_PRICE_CHG_24H:
+        return False, f"TOO LATE -- already {m['chg_24h']:+.0f}% in 24h"
+
+    if ratio < MIN_BUYER_RATIO:
+        return False, f"buy/sell {ratio:.2f} -- distribution, not accumulation"
+
     if buyer_base:
         bmult = m["buyers"] / max(buyer_base, 1)
         m["buyer_mult"] = round(bmult, 1)
@@ -361,33 +384,32 @@ def evaluate(m, baseline, last_alert, buyer_base=None):
             return False, (f"{mult:.1f}x volume but buyers only {bmult:.1f}x "
                            f"-- same wallets churning")
     if m["turnover"] < MIN_TURNOVER:
-        return False, f"turnover {m['turnover']:.1%} of mcap -- asleep for its size"
+        return False, f"turnover {m['turnover']:.1%} -- asleep for its size"
 
     if last_alert and (time.time() - last_alert) < COOLDOWN_HOURS * 3600:
         return False, "cooldown"
 
     bm = f", buyers {m.get('buyer_mult','?')}x" if buyer_base else ""
-    return True, (f"{mult:.1f}x vol{bm}, {m['chg_1h']:+.1f}% 1h, "
-                  f"{ratio:.1f} buy/sell, {m['turnover']:.0%} turnover")
+    return True, (f"ACCUMULATING: {mult:.1f}x vol{bm}, {m['chg_1h']:+.1f}% 1h "
+                  f"(under +{MAX_PRICE_CHG_1H:.0f}% ceiling), {ratio:.1f} buy/sell")
 
 
 def alert_body(addr, m, baseline, reason):
     return (
         f"{m['name']}\n{reason}\n\n"
-        f"Price      ${m['price']:.10f}".rstrip("0") + "\n"
+        f"TIER {m['tier']} -- {m['tier_note']}\n"
+        f"MAX POSITION ${m['max_pos']:,.0f}\n\n"
         f"Market cap ${m['mcap']:,.0f}\n"
-        f"Liquidity  ${m['liquidity']:,.0f}  "
-        f"({m['liquidity']/m['mcap']:.0%} of mcap)\n" if m["mcap"] else ""
-    ) + (
-        f"MAX POSITION ${m['liquidity']*POSITION_PCT:,.0f}\n"
+        f"Liquidity  ${m['liquidity']:,.0f}\n"
         f"1h volume  ${m['vol_1h']:,.0f}  vs baseline ${baseline:,.0f}\n"
+        f"1h change  {m['chg_1h']:+.1f}%   24h {m['chg_24h']:+.1f}%\n"
         f"Buy/sell   {m['buyers']}/{m['sellers']}"
-        + (f"  (buyers {m['buyer_mult']}x baseline)" if m.get("buyer_mult") else "")
-        + f"\nTurnover   {m['turnover']:.0%} of mcap   [{m['tier']}]\n"
-        f"Age        {m['age_days']}d\n\n"
+        + (f"  (buyers {m['buyer_mult']}x)" if m.get("buyer_mult") else "")
+        + f"\nAge        {m['age_days']*24:.0f}h\n\n"
         f"geckoterminal.com/solana/pools/{addr}\n\n"
-        f"NOT A BUY SIGNAL.\n"
-        f"Verify top-10 holders, dev wallet, LP lock before anything."
+        + ("*** TIER D -- CHECK LP LOCK ON RUGCHECK BEFORE BUYING ***\n"
+           if m["tier"] == "D" else "")
+        + "NOT A BUY SIGNAL. Verify holders, dev wallet, LP lock."
     )
 
 
@@ -433,8 +455,8 @@ def check_one(address):
 
     fire, reason = evaluate(m, base, None)
     print(f"  TRIGGER      {'FIRE' if fire else 'no'} -- {reason}")
-    print(f"\n  Max position ${m['liquidity']*POSITION_PCT:,.0f} "
-          f"({POSITION_PCT:.0%} of liquidity)")
+    print(f"\n  TIER {m['tier']} -- {m['tier_note']}")
+    print(f"  Max position ${m['max_pos']:,.0f}")
     print("\n  Kryptsig cannot see holder concentration, dev wallet, or LP lock.")
 
 
@@ -644,7 +666,7 @@ def main():
                     [stamp, addr, m["name"], m["tier"], m.get("multiple"),
                      m.get("buyer_mult",""), round(m["turnover"],4), m["chg_1h"],
                      m["mcap"], m["liquidity"], m.get("buyer_ratio"),
-                     round(m["liquidity"]*POSITION_PCT), "", "", ""])
+                     round(m["max_pos"]), "", "", ""])
 
     dropped = prune(state, liq_seen) if not dry else 0
 
