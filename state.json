@@ -1,16 +1,47 @@
 {
  "last_alert": {},
- "next_page": 2,
+ "next_page": 3,
  "pools": {
   "31u92Vq2eScbZFAqimeqNhEhsNc6Yyw4j2AESAgxJc2s": {
    "added": "2026-08-17T21:47:34+00:00",
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
+    17,
     17
    ],
    "last_candles": 1,
    "name": "PANIC / USDC",
+   "tries": 0
+  },
+  "5Jm4GnWPt62kphmhEET6rjzzFjvsfNxNqdpEuGwp2U9q": {
+   "added": "2026-08-17T22:32:38+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    4119
+   ],
+   "name": "EYE / SOL",
+   "tries": 0
+  },
+  "69Ye9hiPirM8pQuFAxskEeZvi1pKGsYz6VWbUdopxzf": {
+   "added": "2026-08-17T22:32:36+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    11
+   ],
+   "name": "bro / SOL",
+   "tries": 0
+  },
+  "85VwHYCennWkmpwVs6DxNSRCVx17qeYoSeU9mP2Zb5Ef": {
+   "added": "2026-08-17T22:32:36+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    8
+   ],
+   "name": "SCAM / SOL",
    "tries": 0
   },
   "ACH7nGGvJEDvWte79y9M8KGFpwHL4FFKrTtqadbtqSCK": {
@@ -18,9 +49,41 @@
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
+    5,
     5
    ],
+   "last_candles": 1,
    "name": "BOX / SOL",
+   "tries": 0
+  },
+  "AEaLhNAA4KMQFTBuAjd4YyQL5grSXy7Ku6fMmJTAsdUq": {
+   "added": "2026-08-17T22:32:36+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    21
+   ],
+   "name": "Bestfriends / SOL",
+   "tries": 0
+  },
+  "ArwUkKHaj4TXL8Tg32e5fqGtygQg2896WjaHaPmWawux": {
+   "added": "2026-08-17T22:32:36+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    5
+   ],
+   "name": "NATALIE / SOL",
+   "tries": 0
+  },
+  "BKxxSZ3cREsrYiR3dhNT9fUzCVRopqjZwHYbZ8pBjtQr": {
+   "added": "2026-08-17T22:32:38+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    0
+   ],
+   "name": "SPCX / SOL",
    "tries": 0
   },
   "BSoZbGTkasxbZpxT7NeNGtx3RiPkXhiDpWT7Y4LunakA": {
@@ -28,9 +91,40 @@
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
-    2136
+    2136,
+    2411
    ],
    "name": "NVDA / SOL",
+   "tries": 0
+  },
+  "BnfYQqaeyo47Lgwge6oDMTKZLRrCPrKowPfJgd52AvbB": {
+   "added": "2026-08-17T22:32:38+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    39
+   ],
+   "name": "XST / SOL",
+   "tries": 0
+  },
+  "CfUjVfjtcwn9ffacnyemmLUP67uvER3omZXUG2YnJ589": {
+   "added": "2026-08-17T22:32:36+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    85
+   ],
+   "name": "Bestfriends / SOL",
+   "tries": 0
+  },
+  "DNEU92K3wTCC7PHijX5q7R1tZMyboHjNWJnkE6wyE6tH": {
+   "added": "2026-08-17T22:32:38+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    0
+   ],
+   "name": "Basecat / SOL",
    "tries": 0
   },
   "DjvYJfRnMyMyMi5768KXVrnxGnrHT7nz5EPt9fj9kKSN": {
@@ -38,9 +132,20 @@
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
-    150
+    150,
+    0
    ],
    "name": "AAPL / SOL",
+   "tries": 0
+  },
+  "EogT7RzfRibVvheyVUyETiAhQSHEeCHKcghN8sfqJyba": {
+   "added": "2026-08-17T22:32:36+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    5
+   ],
+   "name": "MAGTE / SOL",
    "tries": 0
   },
   "GWGAas7oyaAgRWwSw5bbdRLcBvxfFJLLQiqzRDXYsrLR": {
@@ -48,6 +153,7 @@
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
+    4,
     4
    ],
    "last_candles": 1,
@@ -59,7 +165,8 @@
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
-    2082
+    2082,
+    2398
    ],
    "name": "TSLA / SOL",
    "tries": 0
