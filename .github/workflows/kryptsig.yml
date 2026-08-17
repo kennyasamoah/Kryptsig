@@ -6,10 +6,14 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "run = normal poll | selftest = validate dependencies"
+        description: "run = poll | selftest = check dependencies | audit = check one token"
         type: choice
         default: run
-        options: [run, selftest]
+        options: [run, selftest, audit]
+      address:
+        description: "Token address (audit mode only)"
+        type: string
+        required: false
 
 permissions:
   contents: write
@@ -34,15 +38,27 @@ jobs:
           CG_API_KEY: ${{ secrets.CG_API_KEY }}
         run: python kryptsig.py --selftest
 
+      - name: Audit token
+        if: inputs.mode == 'audit'
+        env:
+          BIRDEYE_API_KEY: ${{ secrets.BIRDEYE_API_KEY }}
+          CG_API_KEY: ${{ secrets.CG_API_KEY }}
+        run: |
+          if [ -z "${{ inputs.address }}" ]; then
+            echo "No address supplied. Re-run and paste a token address."
+            exit 1
+          fi
+          python kryptsig.py --audit "${{ inputs.address }}"
+
       - name: Poll and evaluate
-        if: inputs.mode != 'selftest'
+        if: inputs.mode == '' || inputs.mode == 'run'
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           CG_API_KEY: ${{ secrets.CG_API_KEY }}
         run: python kryptsig.py
 
       - name: Persist state and logs
-        if: always() && inputs.mode != 'selftest'
+        if: always() && (inputs.mode == '' || inputs.mode == 'run')
         run: |
           set -e
           git config user.name  "kryptsig"
