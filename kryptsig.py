@@ -105,11 +105,21 @@ NESTED_FIELDS = [
     ("price_change_percentage", "h1"),
 ]
 
-# ---------------------------------------------------------------- Birdeye
-# Used ONLY by --audit, never by the hourly poll. Separate quota, separate
-# key, and a failure here can never affect the running detector.
-BE      = "https://public-api.birdeye.so"
-BE_KEY  = os.environ.get("BIRDEYE_API_KEY", "").strip()
+# --------------------------------------------------------------- RugCheck
+# Used ONLY by --audit, never by the hourly poll. A failure here can never
+# affect the running detector.
+#
+# Birdeye's free tier returns 401 on token_security ("API key lacks
+# sufficient permissions"), so it cannot do this job. RugCheck's report
+# endpoint carries LP lock status, insider networks, and holder distribution
+# -- the three things no price API exposes.
+RC      = "https://api.rugcheck.xyz/v1"
+RC_KEY  = os.environ.get("RUGCHECK_API_KEY", "").strip()   # optional
+
+# Gates. LP lock is the one that decides whether a loss is recoverable.
+MIN_LP_LOCKED   = 0.90
+MAX_TOP10       = 0.30
+MAX_CREATOR     = 0.05
 
 STATE_FILE = "state.json"
 LOG_FILE   = "observations.csv"
@@ -196,139 +206,179 @@ def notify(title, body):
         print(f"  ! notify: {e}")
 
 
-def be_get(path, params=""):
-    """Birdeye GET. Returns (data, error_string). Distinguishes auth, tier,
-    and rate errors so a paywalled endpoint does not look like empty data."""
-    if not BE_KEY:
-        return None, "BIRDEYE_API_KEY not set"
-    req = urllib.request.Request(
-        f"{BE}{path}{params}",
-        headers={"X-API-KEY": BE_KEY, "x-chain": "solana",
-                 "accept": "application/json"},
-    )
+def rc_get(path):
+    """RugCheck GET. Key is optional -- the report endpoint is public, but an
+    API key raises rate limits. Returns (data, error)."""
+    headers = {"accept": "application/json",
+               "User-Agent": "kryptsig/3.1"}
+    if RC_KEY:
+        headers["X-API-KEY"] = RC_KEY
+    req = urllib.request.Request(f"{RC}{path}", headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=25) as r:
-            payload = json.loads(r.read().decode())
-        if not payload.get("success", True):
-            return None, f"api returned success=false: {payload.get('message','')}"
-        return payload.get("data"), None
+            return json.loads(r.read().decode()), None
     except urllib.error.HTTPError as e:
         body = ""
         try:
-            body = e.read().decode()[:160]
+            body = e.read().decode()[:200]
         except Exception:
             pass
-        if e.code in (401, 403):
-            return None, f"HTTP {e.code} -- key invalid or endpoint above your plan. {body}"
         if e.code == 429:
-            return None, "HTTP 429 -- Birdeye rate limit"
+            return None, "HTTP 429 -- rate limited. Set RUGCHECK_API_KEY to raise limits."
         return None, f"HTTP {e.code} {body}"
     except Exception as e:
         return None, str(e)
 
 
-def pct(x):
-    return f"{x*100:.1f}%" if isinstance(x, (int, float)) else "?"
+def dig(d, *names, default=None):
+    """Field names in this API are not fully documented. Try several
+    spellings rather than guessing one and silently reading nothing."""
+    if not isinstance(d, dict):
+        return default
+    for n in names:
+        if n in d and d[n] is not None:
+            return d[n]
+    return default
+
+
+def as_pct(v):
+    """Accept either 0-1 or 0-100 and normalise to a fraction."""
+    if not isinstance(v, (int, float)):
+        return None
+    return v / 100.0 if v > 1.5 else v
 
 
 def audit(address):
     """Manual pre-trade check. Never called by the hourly poll."""
     print(f"\nKryptsig audit -- {address}\n" + "=" * 62)
-    if not BE_KEY:
-        print("BIRDEYE_API_KEY not set. Get a free key at birdeye.so and export it.")
+
+    rep, err = rc_get(f"/tokens/{address}/report")
+    if err:
+        print(f"\nUNAVAILABLE  {err}")
+        print("\nCheck rugcheck.xyz in a browser instead.")
+        return
+    if not isinstance(rep, dict):
+        print(f"\nUNEXPECTED SHAPE: {type(rep).__name__}")
         return
 
-    verdict, unknowns = [], []
+    fails, warns, unknown = [], [], []
 
-    # ---- 1. contract authorities + concentration -------------------------
-    print("\n[1] contract security")
-    sec, err = be_get("/defi/token_security", f"?address={address}")
-    if err:
-        print(f"  UNAVAILABLE  {err}")
-        unknowns.append("contract security")
-    elif not isinstance(sec, dict):
-        print(f"  UNEXPECTED SHAPE  got {type(sec).__name__}")
-        unknowns.append("contract security")
+    # ---- RugCheck's own verdict ------------------------------------------
+    print("\n[1] rugcheck verdict")
+    score = dig(rep, "score_normalised", "score")
+    if score is not None:
+        print(f"  score           {score}")
+    if dig(rep, "rugged") is True:
+        print("  FAIL  flagged as RUGGED")
+        fails.append("flagged rugged")
+    risks = dig(rep, "risks", default=[]) or []
+    if risks:
+        for r in risks[:8]:
+            lvl = dig(r, "level", default="")
+            nm = dig(r, "name", default="?")
+            print(f"  risk  [{lvl}] {nm}")
+            if str(lvl).lower() in ("danger", "high", "critical"):
+                fails.append(nm)
+            else:
+                warns.append(nm)
     else:
-        def flag(label, key, bad_when_true=True, note=""):
-            v = sec.get(key)
-            if v is None:
-                print(f"  ?     {label:<26} not reported")
-                unknowns.append(label)
-                return
-            bad = bool(v) if bad_when_true else not bool(v)
-            print(f"  {'FAIL' if bad else 'ok  '}  {label:<26} {v}  {note}")
-            if bad:
-                verdict.append(label)
+        print("  no risks listed by rugcheck")
 
-        flag("mint authority active", "mutableMetadata", note="(metadata mutable)")
-        for k in ("freezeable", "freezeAuthority"):
-            if k in sec:
-                flag("freeze authority", k)
-                break
-
-        top10 = sec.get("top10HolderPercent")
-        if isinstance(top10, (int, float)):
-            bad = top10 > 0.30
-            print(f"  {'FAIL' if bad else 'ok  '}  {'top 10 holders':<26} {pct(top10)}"
-                  f"   (threshold 30%)")
-            if bad:
-                verdict.append("top-10 concentration")
+    # ---- authorities ------------------------------------------------------
+    print("\n[2] authorities")
+    tok = dig(rep, "token", default={}) or {}
+    for label, keys in (("mint authority", ("mintAuthority",)),
+                        ("freeze authority", ("freezeAuthority",))):
+        v = dig(tok, *keys)
+        if v in (None, "", "null"):
+            print(f"  ok    {label:<20} revoked")
         else:
-            unknowns.append("top-10 concentration")
+            print(f"  FAIL  {label:<20} ACTIVE ({str(v)[:20]})")
+            fails.append(label + " active")
 
-        creator = sec.get("creatorPercentage")
-        if isinstance(creator, (int, float)):
-            bad = creator > 0.05
-            print(f"  {'FAIL' if bad else 'ok  '}  {'creator holdings':<26} {pct(creator)}"
-                  f"   (threshold 5%)")
-            if bad:
-                verdict.append("creator still holding")
-
-        # surface anything else the API returned that we did not map
-        extra = [k for k in sec
-                 if k not in ("mutableMetadata", "freezeable", "freezeAuthority",
-                              "top10HolderPercent", "creatorPercentage")]
-        if extra:
-            print(f"\n  other fields returned: {', '.join(sorted(extra)[:14])}")
-
-    # ---- 2. holder distribution ------------------------------------------
-    print("\n[2] holder distribution")
-    holders, err = be_get("/defi/v3/token/holder", f"?address={address}&limit=20")
-    if err:
-        print(f"  UNAVAILABLE  {err}")
-        print("  (this endpoint is Starter-plan and above; free keys get "
-              "top-10 percent from section 1 instead)")
-        unknowns.append("holder list")
+    # ---- LP lock ----------------------------------------------------------
+    print("\n[3] liquidity lock")
+    markets = dig(rep, "markets", default=[]) or []
+    best = None
+    for m in markets:
+        lp = dig(m, "lp", default={}) or {}
+        locked = as_pct(dig(lp, "lpLockedPct", "lpLockedPercentage"))
+        if locked is not None and (best is None or locked > best):
+            best = locked
+    if best is None:
+        print("  ?     lp locked %        not reported")
+        unknown.append("LP lock")
     else:
-        items = holders.get("items") if isinstance(holders, dict) else holders
-        if items:
-            print(f"  {len(items)} holders returned")
-            for h in items[:10]:
-                owner = h.get("owner", "?")
-                amt = h.get("ui_amount") or h.get("uiAmount") or h.get("amount")
-                print(f"    {owner[:6]}...{owner[-4:]}   {amt}")
-            print("\n  Check funding sources manually on solscan.io: open each")
-            print("  wallet, look at its FIRST inbound transfer. Shared funder")
-            print("  across several = one operator, not several buyers.")
-        else:
-            print("  no items in response")
+        bad = best < MIN_LP_LOCKED
+        print(f"  {'FAIL' if bad else 'ok  '}  {'lp locked':<20} {best*100:.1f}%"
+              f"   (need {MIN_LP_LOCKED*100:.0f}%)")
+        if bad:
+            fails.append(f"LP only {best*100:.0f}% locked -- "
+                         f"{100-best*100:.0f}% is withdrawable")
 
-    # ---- 3. verdict -------------------------------------------------------
+    # ---- distribution -----------------------------------------------------
+    print("\n[4] distribution")
+    total_holders = dig(rep, "totalHolders", "total_holders")
+    if total_holders:
+        print(f"  holders         {total_holders:,}")
+
+    creator_pct = as_pct(dig(rep, "creatorBalancePct", "creator_balance_pct"))
+    if creator_pct is None:
+        cb, sup = dig(rep, "creatorBalance"), dig(tok, "supply")
+        if isinstance(cb, (int, float)) and isinstance(sup, (int, float)) and sup:
+            creator_pct = cb / sup
+    if creator_pct is None:
+        print("  ?     creator balance    not reported")
+        unknown.append("creator balance")
+    else:
+        bad = creator_pct > MAX_CREATOR
+        print(f"  {'FAIL' if bad else 'ok  '}  {'creator balance':<20} "
+              f"{creator_pct*100:.1f}%   (max {MAX_CREATOR*100:.0f}%)")
+        if bad:
+            fails.append("creator still holding")
+
+    top = dig(rep, "topHolders", "top_holders", default=[]) or []
+    if top:
+        pcts = [as_pct(dig(h, "pct", "percentage")) or 0 for h in top[:10]]
+        top10 = sum(pcts)
+        bad = top10 > MAX_TOP10
+        print(f"  {'FAIL' if bad else 'ok  '}  {'top 10 holders':<20} "
+              f"{top10*100:.1f}%   (max {MAX_TOP10*100:.0f}%)")
+        if bad:
+            fails.append("top-10 concentration")
+        insiders = [h for h in top if dig(h, "insider") is True]
+        if insiders:
+            print(f"  WARN  {'insider wallets':<20} {len(insiders)} of "
+                  f"{len(top)} flagged as linked")
+            warns.append(f"{len(insiders)} insider wallets in top holders")
+    else:
+        unknown.append("top holders")
+
+    # ---- verdict ----------------------------------------------------------
     print("\n" + "=" * 62)
-    if verdict:
+    if fails:
         print("DO NOT BUY -- failed:")
-        for v in verdict:
-            print(f"  - {v}")
-    elif unknowns:
+        for f_ in dict.fromkeys(fails):
+            print(f"  - {f_}")
+    elif unknown:
         print("INCONCLUSIVE -- could not verify:")
-        for u in sorted(set(unknowns)):
+        for u in dict.fromkeys(unknown):
             print(f"  - {u}")
-        print("\nVerify manually on rugcheck.xyz before risking anything.")
     else:
-        print("No automated red flags. This is NOT a recommendation --")
-        print("it means nothing obvious was rigged. Still check LP lock on")
-        print("rugcheck.xyz and read the holder funding sources yourself.")
+        print("No automated red flags.")
+        print("This means nothing obvious was rigged. It is NOT a")
+        print("recommendation, and it does not make the trade good.")
+    if warns:
+        print("\nWarnings (not disqualifying, but weigh them):")
+        for w in dict.fromkeys(warns):
+            print(f"  - {w}")
+
+    extra = [k for k in rep if k not in
+             ("score", "score_normalised", "rugged", "risks", "token",
+              "markets", "totalHolders", "total_holders", "creatorBalance",
+              "creatorBalancePct", "topHolders", "top_holders")]
+    if extra:
+        print(f"\nunmapped response fields: {', '.join(sorted(extra)[:16])}")
     print()
 
 
