@@ -44,11 +44,34 @@ jobs:
       - name: Persist state and logs
         if: always() && inputs.mode != 'selftest'
         run: |
+          set -e
           git config user.name  "kryptsig"
           git config user.email "actions@github.com"
-          git add state.json observations.csv alerts.csv 2>/dev/null || true
-          git diff --staged --quiet || git commit -m "poll $(date -u +%FT%TZ)"
+
+          # NOTE: `git add a b c` fails and stages NOTHING if any path is
+          # missing. On the first run observations.csv and alerts.csv do not
+          # exist yet, so listing them by name silently staged nothing.
+          git add -A
+
+          if git diff --staged --quiet; then
+            echo "nothing to commit"
+            exit 0
+          fi
+
+          git commit -m "poll $(date -u +%FT%TZ)"
+
+          pushed=0
           for i in 1 2 3; do
-            git pull --rebase --autostash && git push && break
+            if git pull --rebase --autostash && git push; then
+              pushed=1
+              break
+            fi
+            echo "push attempt $i failed, retrying"
             sleep 5
           done
+
+          if [ "$pushed" -ne 1 ]; then
+            echo "PUSH FAILED after 3 attempts -- state was NOT saved"
+            exit 1
+          fi
+          echo "state persisted"
