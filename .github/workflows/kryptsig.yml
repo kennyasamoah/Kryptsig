@@ -41,7 +41,7 @@ jobs:
       - name: Audit token
         if: inputs.mode == 'audit'
         env:
-          BIRDEYE_API_KEY: ${{ secrets.BIRDEYE_API_KEY }}
+          RUGCHECK_API_KEY: ${{ secrets.RUGCHECK_API_KEY }}
           CG_API_KEY: ${{ secrets.CG_API_KEY }}
         run: |
           if [ -z "${{ inputs.address }}" ]; then
