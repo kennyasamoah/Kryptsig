@@ -258,8 +258,12 @@ def liquidity_ok(m):
 # early and cheaply; the ALERT gates are what protect you.
 WATCH_MIN_LIQ = 2_000    # new_pools median liquidity is ~$2k. This is the
                          # launch firehose; we admit cheaply and evict fast.
-MATURITY_HOURS = 8       # by this age a token must have grown or it is dead.
-                         # Fast eviction is what keeps pond slots recycling.
+# Eviction is trajectory-based. new_pools tokens start near $2k; reaching the
+# $12.5k alert floor is roughly the graduation event, which most never manage.
+# But some take a day. So: evict fast if there is NO growth, slower if there is.
+STALL_HOURS   = 8        # no growth at all by now -> dead
+STALL_LIQ     = 5_000
+MATURITY_HOURS = 24      # grew but never cleared the alert floor -> dead
 
 def admissible(m):
     """Loose. Just: is this plausibly worth watching as it matures?"""
@@ -330,10 +334,12 @@ def prune(state, seen):
     for addr, m in seen.items():
         if addr not in state["pools"]:
             continue
+        age_h = m["age_days"] * 24
         dead = m["liquidity"] < WATCH_MIN_LIQ
-        stalled = (m["age_days"] * 24 > MATURITY_HOURS
-                   and m["liquidity"] < MIN_LIQ_ABS)
-        # a token that has matured and IS liquid stays regardless of age
+        no_growth = age_h > STALL_HOURS and m["liquidity"] < STALL_LIQ
+        stalled = age_h > MATURITY_HOURS and m["liquidity"] < MIN_LIQ_ABS
+        # anything at or above the alert floor stays, regardless of age
+        stalled = stalled or no_growth
         if dead or stalled:
             del state["pools"][addr]
             state["last_alert"].pop(addr, None)
@@ -571,6 +577,17 @@ def selftest():
                   f"alert age {MIN_AGE_HOURS}h")
     else:
         bad("new_pools", "returned nothing")
+
+    # The pond has a second source: deeper pages of top-pools-by-volume, where
+    # already-graduated tokens live. Newborn stats alone understate the intake.
+    est = get(f"/networks/{NET}/pools", "?page=4&sort=h24_volume_usd_desc")
+    ep = (est or {}).get("data") or []
+    if ep:
+        adm2 = sum(1 for p in ep if admissible(parse_pool(p.get("attributes") or {}))[0])
+        alertable = sum(1 for p in ep
+                        if qualifies(parse_pool(p.get("attributes") or {}))[0])
+        ok("established pools (page 4)",
+           f"{adm2}/{len(ep)} admitted, {alertable} already alertable")
 
     data = get(f"/networks/{NET}/pools", "?page=1&sort=h24_volume_usd_desc")
     if not data:
