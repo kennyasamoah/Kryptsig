@@ -1,46 +1,62 @@
 # Kryptsig
 
-A dormancy-break signal service for Solana tokens.
+An **accumulation detector** for Solana tokens.
 
-Kryptsig watches tokens that have gone quiet and notifies you when one wakes
-up. You do not pick the tokens — it builds its own universe from **liquidity
-and age, deliberately not from momentum.**
+Kryptsig fires when unique buyers are arriving and price has started moving
+but has **not yet gone vertical**. The goal is the window before a token
+shows up in a social feed — because by the time someone posts their thesis,
+their followers are the exit.
 
-**It holds no keys, touches no wallet, and cannot trade.** It is a detection
-layer only. Never give it execution permissions.
+**It holds no keys, touches no wallet, and cannot trade.** Detection only.
 
 ---
 
-## Why liquidity and not popularity
+## The ceiling is the whole idea
 
-Trending lists are rearview mirrors: they rank on 24h volume and recent price,
-so the signal arrives after the move. Kryptsig instead admits tokens *before
-anything happens to them* — stocking a pond with boring survivors — then fires
-when one stops being boring.
+Most screeners require a big move. That guarantees you arrive after it.
+Kryptsig requires the opposite: price must be up, but **under a ceiling**.
 
 ```
-UNIVERSE (admission)          SIGNAL (alert)
-liquidity >= $30k             1h volume >= 4x baseline
-  AND >= 15% of mcap          AND >= $10k absolute
-age >= 14 days                AND price +8% in 1h
-mcap <= $200M                 AND buyers/sellers >= 1.2
-no momentum condition         AND unique buyers >= 3x baseline
-                              AND 24h turnover >= 10% of mcap
-                              6h cooldown
+volume >= 3x baseline           the move is real
+unique buyers >= 2.5x baseline  new wallets, not the same ones churning
+buyers/sellers >= 1.3           accumulation, not distribution
+price +2% to +60% in 1h         the ramp -- NOT the spike
+price under +300% in 24h        did not already run yesterday
 ```
 
-**Unique buyer count is the strongest gate.** Wash trading inflates volume
-with two wallets shuffling; inflating unique buyers costs 300 funded wallets
-and 300 fees. When volume spikes 50x and buyers only move 1.2x, that is
-staged activity, not attention.
+SalaryCat at +385%/hour is rejected as TOO LATE. The same token six hours
+earlier, at +14% with buyers climbing, is exactly what fires.
 
-The buyer baseline cannot be backfilled — OHLCV candles carry volume but not
-participant counts — so it accumulates from polls and activates after ~12
-hours. Volume alerts work from run one; this gate simply skips until ready.
+---
 
-The liquidity **ratio** matters more than the floor. A $300k token with $50k
-pooled can absorb your exit. A $900k token with $31k pooled cannot — even
-though it clears the absolute floor.
+## Liquidity sizes, it does not block
+
+Everything derives from one number: **your max position, $250.**
+
+A $250 position should never exceed 2% of the pool, which sets a hard floor
+at $12,500 — below that you cannot exit at a price you would accept. Above
+it, you get the alert plus a tier and a position cap:
+
+| Tier | Liquidity | Meaning |
+|---|---|---|
+| A | $100k+ | deep, clean exit |
+| B | $50-100k | adequate |
+| C | $25-50k | thin, expect slippage |
+| D | $12.5-25k | very thin, real slippage, **check LP lock** |
+
+You are not blocked from thin tokens. You are told what you are taking on.
+
+---
+
+## What this costs you
+
+More alerts — several a day, not several a week. More false positives:
+accumulation patterns often just fade. And rugs will now reach your phone.
+The tier label is a warning, not a wall.
+
+**Tier D alerts require a manual RugCheck for LP lock before buying.**
+Unlocked liquidity means the pool can be withdrawn and your position becomes
+unsellable at any price. No price API exposes this.
 
 ---
 
