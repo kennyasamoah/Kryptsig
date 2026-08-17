@@ -262,32 +262,39 @@ def qualifies(m):
 
 
 def discover(state):
-    """One page per run, rotating 1-8. Costs 1 call instead of 8; the
-    universe fills over a few hours, which is fine for a patient strategy."""
+    """Two sources per run:
+      1. /new_pools  -- freshly created pools. This is where accumulation
+         candidates live. Sorting by volume only surfaces SOL/USDC majors.
+      2. /pools page N (rotating) -- established pools that may re-accelerate.
+    Costs 2 calls."""
     added = 0
-    page = state.get("next_page", 1)
-    state["next_page"] = page + 1 if page < 8 else 1
 
-    for _ in (1,):
-        if len(state["pools"]) >= UNIVERSE_CAP:
-            break
-        data = get(f"/networks/{NET}/pools",
-                   f"?page={page}&sort=h24_volume_usd_desc")
-        if not data or not data.get("data"):
-            break
-        for pool in data["data"]:
+    def admit(payload):
+        nonlocal added
+        for pool in (payload or {}).get("data") or []:
             if len(state["pools"]) >= UNIVERSE_CAP:
-                break
+                return
             attrs = pool.get("attributes") or {}
             addr = attrs.get("address")
             if not addr or addr in state["pools"]:
                 continue
-            ok, _ = qualifies(parse_pool(attrs))
+            m = parse_pool(attrs)
+            ok, _ = qualifies(m)
             if ok:
-                state["pools"][addr] = {
-                    "name": parse_pool(attrs)["name"], "baseline": None,
-                    "baseline_ts": None, "tries": 0, "added": now_iso()}
+                state["pools"][addr] = {"name": m["name"], "baseline": None,
+                                        "baseline_ts": None, "tries": 0,
+                                        "added": now_iso()}
                 added += 1
+
+    if len(state["pools"]) < UNIVERSE_CAP:
+        admit(get(f"/networks/{NET}/new_pools"))
+
+    page = state.get("next_page", 1)
+    state["next_page"] = page + 1 if page < 8 else 1
+    if len(state["pools"]) < UNIVERSE_CAP:
+        admit(get(f"/networks/{NET}/pools",
+                  f"?page={page}&sort=h24_volume_usd_desc"))
+
     return added
 
 
@@ -490,7 +497,20 @@ def selftest():
         bad("NTFY_TOPIC missing", "alerts would be printed, not delivered")
 
     # 2 -- can we reach the API at all
-    print("\n[2] discovery endpoint")
+    print("\n[2] discovery endpoints")
+    fresh = get(f"/networks/{NET}/new_pools")
+    nf = len((fresh or {}).get("data") or [])
+    if nf:
+        ok("new_pools", f"{nf} fresh pools")
+        qual = sum(1 for p in fresh["data"]
+                   if qualifies(parse_pool(p.get("attributes") or {}))[0])
+        if qual:
+            ok("admission filter", f"{qual}/{nf} qualify")
+        else:
+            warn("admission filter", f"0/{nf} qualify -- filters may be too tight")
+    else:
+        bad("new_pools", "returned nothing")
+
     data = get(f"/networks/{NET}/pools", "?page=1&sort=h24_volume_usd_desc")
     if not data:
         bad("GET /networks/solana/pools", "no response -- see error above")
@@ -690,8 +710,10 @@ def main():
         return
     if CALLS["n"] == 0:
         problems.append("no API calls were made")
-    if not state["pools"]:
-        problems.append("universe is empty -- discovery is returning nothing")
+    if not state["pools"] and state.get("empty_runs", 0) >= 3:
+        problems.append("universe still empty after 3 runs -- "
+                        "admission filters may be rejecting everything")
+    state["empty_runs"] = 0 if state["pools"] else state.get("empty_runs", 0) + 1
     if state["pools"] and not ready:
         stalled = all(v.get("tries", 0) >= MAX_BACKFILL_TRIES
                       for v in state["pools"].values())
