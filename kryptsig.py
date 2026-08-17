@@ -258,7 +258,8 @@ def liquidity_ok(m):
 # early and cheaply; the ALERT gates are what protect you.
 WATCH_MIN_LIQ = 2_000    # new_pools median liquidity is ~$2k. This is the
                          # launch firehose; we admit cheaply and evict fast.
-MATURITY_HOURS = 24      # by this age a token must have grown or it is dead
+MATURITY_HOURS = 8       # by this age a token must have grown or it is dead.
+                         # Fast eviction is what keeps pond slots recycling.
 
 def admissible(m):
     """Loose. Just: is this plausibly worth watching as it matures?"""
@@ -332,6 +333,7 @@ def prune(state, seen):
         dead = m["liquidity"] < WATCH_MIN_LIQ
         stalled = (m["age_days"] * 24 > MATURITY_HOURS
                    and m["liquidity"] < MIN_LIQ_ABS)
+        # a token that has matured and IS liquid stays regardless of age
         if dead or stalled:
             del state["pools"][addr]
             state["last_alert"].pop(addr, None)
@@ -698,7 +700,13 @@ def main():
             print()
 
     ready = [a for a, v in state["pools"].items() if v.get("baseline")]
-    batches = [fixture] if dry else [ready[i:i+30] for i in range(0, len(ready), 30)]
+
+    # Poll EVERY pooled token, not just baselined ones. Newborns need their
+    # liquidity refreshed so prune() can evict the ones that never grow, and
+    # their buyer history has to start accumulating before they mature.
+    watched = list(state["pools"].keys())
+    batches = ([fixture] if dry
+               else [watched[i:i+30] for i in range(0, len(watched), 30)])
 
     alerts, logged, evaluated, liq_seen = 0, 0, 0, {}
 
