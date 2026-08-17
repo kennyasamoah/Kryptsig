@@ -42,7 +42,7 @@ MIN_AGE_HOURS    = 6             # was 14 days. Target is now accumulation,
                                  # not dormancy break -- but we still need
                                  # enough candles for a baseline.
 MAX_MCAP         = 20_000_000    # tightened: asymmetry, not safety
-UNIVERSE_CAP     = 120
+UNIVERSE_CAP     = 150
 
 # ======================================================================
 # SIGNAL -- loose on purpose during the logging phase.
@@ -256,7 +256,9 @@ def liquidity_ok(m):
 # hours it may have $40k and a baseline. If we reject it at admission we never
 # see it again, because new_pools only shows it once. So the pond admits
 # early and cheaply; the ALERT gates are what protect you.
-WATCH_MIN_LIQ = 5_000    # low bar: liquidity grows, and we re-check at alert
+WATCH_MIN_LIQ = 2_000    # new_pools median liquidity is ~$2k. This is the
+                         # launch firehose; we admit cheaply and evict fast.
+MATURITY_HOURS = 24      # by this age a token must have grown or it is dead
 
 def admissible(m):
     """Loose. Just: is this plausibly worth watching as it matures?"""
@@ -316,11 +318,21 @@ def discover(state):
     return added
 
 
-def prune(state, seen_liquidity):
-    """Free slots held by pools that have died (BUG 5)."""
+def prune(state, seen):
+    """Two evictions:
+      1. liquidity collapsed below the watch floor
+      2. old enough to have grown, and did not
+
+    Without (2) the pond fills with dead newborns within two days and stops
+    admitting anything. Most launches die; the pond has to reflect that."""
     dropped = 0
-    for addr, liq in seen_liquidity.items():
-        if liq < WATCH_MIN_LIQ and addr in state["pools"]:
+    for addr, m in seen.items():
+        if addr not in state["pools"]:
+            continue
+        dead = m["liquidity"] < WATCH_MIN_LIQ
+        stalled = (m["age_days"] * 24 > MATURITY_HOURS
+                   and m["liquidity"] < MIN_LIQ_ABS)
+        if dead or stalled:
             del state["pools"][addr]
             state["last_alert"].pop(addr, None)
             dropped += 1
@@ -550,7 +562,11 @@ def selftest():
         if ages:
             ages.sort(); liqs.sort()
             print(f"        median age {ages[len(ages)//2]:.1f}h, "
-                  f"median liquidity ${liqs[len(liqs)//2]:,.0f}")
+                  f"median liquidity ${liqs[len(liqs)//2]:,.0f}, "
+                  f"max liquidity ${liqs[-1]:,.0f}")
+            print(f"        watch floor ${WATCH_MIN_LIQ:,} | "
+                  f"alert floor ${MIN_LIQ_ABS:,} | "
+                  f"alert age {MIN_AGE_HOURS}h")
     else:
         bad("new_pools", "returned nothing")
 
@@ -699,7 +715,7 @@ def main():
             if not addr:
                 continue
             m = enrich(parse_pool(attrs))
-            liq_seen[addr] = m["liquidity"]
+            liq_seen[addr] = m
             entry = state["pools"].setdefault(addr, {"name": m["name"]})
             baseline = entry.get("baseline")
             buyer_base = update_buyer_baseline(entry, m["buyers"])
@@ -746,9 +762,12 @@ def main():
     print(f"\nbudget: {CALLS['n']} calls this run -> ~{projected:,}/month "
           f"({pct:.0%} of {MONTHLY_CREDITS:,})"
           + ("  ** OVER BUDGET **" if pct > 0.85 else ""))
+    mature = sum(1 for m in liq_seen.values()
+                 if m["liquidity"] >= MIN_LIQ_ABS
+                 and m["age_days"] * 24 >= MIN_AGE_HOURS)
     print(f"{stamp} | {mode} | {CALLS['n']} api calls | "
-          f"tracking {len(state['pools'])} | {len(ready)} live | "
-          f"{logged} logged | {dropped} pruned | {alerts} alert(s)")
+          f"pond {len(state['pools'])} ({mature} alertable, {len(ready)} baselined) "
+          f"| {logged} logged | {dropped} pruned | {alerts} alert(s)")
 
     # A green check on a run that did nothing is worse than a crash: it
     # produces weeks of false confidence instead of one visible failure.
