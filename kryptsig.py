@@ -250,7 +250,25 @@ def liquidity_ok(m):
     return True, ""
 
 
+# Admission and alerting are deliberately different.
+#
+# A token 20 minutes old with $8k pooled cannot be traded today -- but in six
+# hours it may have $40k and a baseline. If we reject it at admission we never
+# see it again, because new_pools only shows it once. So the pond admits
+# early and cheaply; the ALERT gates are what protect you.
+WATCH_MIN_LIQ = 5_000    # low bar: liquidity grows, and we re-check at alert
+
+def admissible(m):
+    """Loose. Just: is this plausibly worth watching as it matures?"""
+    if m["liquidity"] < WATCH_MIN_LIQ:
+        return False, f"liquidity ${m['liquidity']:,.0f} < ${WATCH_MIN_LIQ:,}"
+    if m["mcap"] and m["mcap"] > MAX_MCAP:
+        return False, f"mcap ${m['mcap']:,.0f} too large"
+    return True, "admitted"
+
+
 def qualifies(m):
+    """Strict. Applied at ALERT time, not admission."""
     ok, why = liquidity_ok(m)
     if not ok:
         return False, why
@@ -279,7 +297,7 @@ def discover(state):
             if not addr or addr in state["pools"]:
                 continue
             m = parse_pool(attrs)
-            ok, _ = qualifies(m)
+            ok, _ = admissible(m)
             if ok:
                 state["pools"][addr] = {"name": m["name"], "baseline": None,
                                         "baseline_ts": None, "tries": 0,
@@ -302,7 +320,7 @@ def prune(state, seen_liquidity):
     """Free slots held by pools that have died (BUG 5)."""
     dropped = 0
     for addr, liq in seen_liquidity.items():
-        if liq < MIN_LIQ_ABS and addr in state["pools"]:
+        if liq < WATCH_MIN_LIQ and addr in state["pools"]:
             del state["pools"][addr]
             state["last_alert"].pop(addr, None)
             dropped += 1
@@ -337,6 +355,13 @@ def update_buyer_baseline(entry, buyers_now):
     return statistics.median(prior)
 
 
+def too_young_for_baseline(entry):
+    """A pool with 2 hours of history cannot produce a baseline yet. Do not
+    count that against its retry budget -- it will be old enough later."""
+    return entry.get("last_candles", 0) < MIN_BASELINE_OBS and \
+           entry.get("tries", 0) > 0 and entry.get("young", False)
+
+
 def needs_baseline(entry):
     """None, or older than a week (BUG 2), and not exhausted (BUG 3)."""
     if entry.get("tries", 0) >= MAX_BACKFILL_TRIES and not entry.get("baseline"):
@@ -359,6 +384,8 @@ def evaluate(m, baseline, last_alert, buyer_base=None):
     ok, why = liquidity_ok(m)
     if not ok:
         return False, why
+    if m["age_days"] * 24 < MIN_AGE_HOURS:
+        return False, f"{m['age_days']*24:.1f}h old -- too young to alert"
     if not baseline or baseline <= 0:
         return False, "no baseline yet"
 
@@ -502,12 +529,28 @@ def selftest():
     nf = len((fresh or {}).get("data") or [])
     if nf:
         ok("new_pools", f"{nf} fresh pools")
-        qual = sum(1 for p in fresh["data"]
-                   if qualifies(parse_pool(p.get("attributes") or {}))[0])
-        if qual:
-            ok("admission filter", f"{qual}/{nf} qualify")
+        adm, reasons = 0, {}
+        ages, liqs = [], []
+        for p in fresh["data"]:
+            m = parse_pool(p.get("attributes") or {})
+            ages.append(m["age_days"] * 24)
+            liqs.append(m["liquidity"])
+            good, why = admissible(m)
+            if good:
+                adm += 1
+            else:
+                key = why.split("$")[0].strip() or why
+                reasons[key] = reasons.get(key, 0) + 1
+        if adm:
+            ok("admission (watch list)", f"{adm}/{nf} admitted")
         else:
-            warn("admission filter", f"0/{nf} qualify -- filters may be too tight")
+            bad("admission (watch list)", f"0/{nf} admitted -- nothing to watch")
+        for r, c in sorted(reasons.items(), key=lambda x: -x[1])[:3]:
+            print(f"        rejected {c}x: {r}")
+        if ages:
+            ages.sort(); liqs.sort()
+            print(f"        median age {ages[len(ages)//2]:.1f}h, "
+                  f"median liquidity ${liqs[len(liqs)//2]:,.0f}")
     else:
         bad("new_pools", "returned nothing")
 
@@ -627,7 +670,11 @@ def main():
         for addr in pending[:BACKFILL_BUDGET]:
             base, n = backfill(addr)
             e = state["pools"][addr]
-            e["tries"] = e.get("tries", 0) + 1
+            e["last_candles"] = n
+            # only count it as a failed attempt if there was enough history
+            # and we still could not build a baseline
+            if base or n >= MIN_BASELINE_OBS:
+                e["tries"] = e.get("tries", 0) + 1
             if base:
                 e["baseline"], e["baseline_ts"] = base, now_iso()
             print(f"  baseline {e['name'][:22]:<22} {n} candles  ${base or 0:,.0f}/hr")
