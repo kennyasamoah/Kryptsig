@@ -1,0 +1,68 @@
+{
+ "last_alert": {},
+ "next_page": 2,
+ "pools": {
+  "31u92Vq2eScbZFAqimeqNhEhsNc6Yyw4j2AESAgxJc2s": {
+   "added": "2026-08-17T21:47:34+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    17
+   ],
+   "last_candles": 1,
+   "name": "PANIC / USDC",
+   "tries": 0
+  },
+  "ACH7nGGvJEDvWte79y9M8KGFpwHL4FFKrTtqadbtqSCK": {
+   "added": "2026-08-17T21:47:34+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    5
+   ],
+   "name": "BOX / SOL",
+   "tries": 0
+  },
+  "BSoZbGTkasxbZpxT7NeNGtx3RiPkXhiDpWT7Y4LunakA": {
+   "added": "2026-08-17T21:47:36+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    2136
+   ],
+   "name": "NVDA / SOL",
+   "tries": 0
+  },
+  "DjvYJfRnMyMyMi5768KXVrnxGnrHT7nz5EPt9fj9kKSN": {
+   "added": "2026-08-17T21:47:36+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    150
+   ],
+   "name": "AAPL / SOL",
+   "tries": 0
+  },
+  "GWGAas7oyaAgRWwSw5bbdRLcBvxfFJLLQiqzRDXYsrLR": {
+   "added": "2026-08-17T21:47:34+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    4
+   ],
+   "last_candles": 1,
+   "name": "VOLVAN / SOL",
+   "tries": 0
+  },
+  "JDA2kAG6pCxGhY8gXWLQ1xy7F9BxGoqiz2PaHEqbC33d": {
+   "added": "2026-08-17T21:47:36+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    2082
+   ],
+   "name": "TSLA / SOL",
+   "tries": 0
+  }
+ }
+}
