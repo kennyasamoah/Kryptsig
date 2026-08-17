@@ -35,7 +35,7 @@ MIN_LIQ_ABS      = 30_000        # hard floor in USD
 MIN_LIQ_RATIO    = 0.15          # ...and >= 15% of market cap
 MIN_AGE_DAYS     = 14
 MAX_MCAP         = 200_000_000   # raised; size_tier logs which band performs
-UNIVERSE_CAP     = 400
+UNIVERSE_CAP     = 120
 
 # ======================================================================
 # SIGNAL -- loose on purpose during the logging phase.
@@ -57,13 +57,41 @@ COOLDOWN_HOURS     = 6
 BASELINE_HOURS     = 168         # 7 days of hourly candles
 MIN_BASELINE_OBS   = 48
 BASELINE_MAX_AGE_H = 168         # refresh weekly (BUG 2)
-BACKFILL_BUDGET    = 25
+BACKFILL_BUDGET    = 2
 MAX_BACKFILL_TRIES = 3           # then give up (BUG 3)
 LOG_MIN_MULTIPLE   = 2.0         # throttle the log (BUG 1)
 
-GT   = "https://api.geckoterminal.com/api/v2"
+# With a free CoinGecko Demo key, calls are limited PER KEY. Without one,
+# they are limited per IP -- and GitHub Actions runners share IPs with
+# thousands of other jobs, so the keyless tier 429s before we start.
+CG_KEY = os.environ.get("CG_API_KEY", "").strip()
+if CG_KEY:
+    GT = "https://api.coingecko.com/api/v3/onchain"
+else:
+    GT = "https://api.geckoterminal.com/api/v2"
+
 NET  = "solana"
-PACE = 2.2
+PACE = 1.5 if CG_KEY else 7.0     # keyless is ~10 calls/min
+MAX_RETRIES = 4
+
+# CoinGecko Demo: 10,000 credits/month, 100 calls/min. Every retry is a
+# billable call. A hard per-run ceiling means a bug cannot burn the month's
+# budget in an afternoon -- the run degrades instead of the quota dying.
+MONTHLY_CREDITS   = 10_000
+MAX_CALLS_PER_RUN = 14
+CALLS = {"n": 0, "capped": False}
+
+# Fields the parser depends on. Declared here so --selftest can verify the
+# live API actually returns them, instead of num() silently yielding 0.0 and
+# a healthy token reading as dead.
+POOL_FIELDS = [
+    "name", "reserve_in_usd", "base_token_price_usd", "volume_usd",
+    "price_change_percentage", "transactions", "pool_created_at", "fdv_usd",
+]
+NESTED_FIELDS = [
+    ("volume_usd", "h1"), ("volume_usd", "h24"),
+    ("price_change_percentage", "h1"),
+]
 
 STATE_FILE = "state.json"
 LOG_FILE   = "observations.csv"
@@ -84,18 +112,39 @@ def load_json(path, default):
 
 
 def get(path, params=""):
-    req = urllib.request.Request(
-        f"{GT}{path}{params}",
-        headers={"Accept": "application/json", "User-Agent": "kryptsig/3.0"},
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=25) as r:
-            data = json.loads(r.read().decode())
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as e:
-        print(f"  ! {path} -> {e}")
-        data = None
-    time.sleep(PACE)
-    return data
+    """GET with exponential backoff on 429. Returns None after MAX_RETRIES."""
+    headers = {"Accept": "application/json", "User-Agent": "kryptsig/3.1"}
+    if CG_KEY:
+        headers["x-cg-demo-api-key"] = CG_KEY
+
+    if CALLS["n"] >= MAX_CALLS_PER_RUN:
+        if not CALLS["capped"]:
+            print(f"  [budget] hit {MAX_CALLS_PER_RUN} calls this run -- "
+                  f"skipping remaining requests")
+            CALLS["capped"] = True
+        return None
+
+    for attempt in range(MAX_RETRIES):
+        req = urllib.request.Request(f"{GT}{path}{params}", headers=headers)
+        try:
+            CALLS["n"] += 1
+            with urllib.request.urlopen(req, timeout=25) as r:
+                time.sleep(PACE)
+                return json.loads(r.read().decode())
+        except urllib.error.HTTPError as e:
+            if e.code == 429 and attempt < MAX_RETRIES - 1:
+                wait = PACE * (2 ** attempt) + 3
+                print(f"  429 -- backing off {wait:.0f}s "
+                      f"(attempt {attempt + 1}/{MAX_RETRIES})")
+                time.sleep(wait)
+                continue
+            print(f"  ! {path} -> HTTP {e.code}")
+            return None
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as e:
+            print(f"  ! {path} -> {e}")
+            time.sleep(PACE)
+            return None
+    return None
 
 
 def num(x, default=0.0):
@@ -195,9 +244,14 @@ def qualifies(m):
 
 
 def discover(state):
+    """One page per run, rotating 1-8. Costs 1 call instead of 8; the
+    universe fills over a few hours, which is fine for a patient strategy."""
     added = 0
-    for page in range(1, 9):
-        if len(state["pools"]) >= UNIVERSE_CAP:      # BUG 4
+    page = state.get("next_page", 1)
+    state["next_page"] = page + 1 if page < 8 else 1
+
+    for _ in (1,):
+        if len(state["pools"]) >= UNIVERSE_CAP:
             break
         data = get(f"/networks/{NET}/pools",
                    f"?page={page}&sort=h24_volume_usd_desc")
@@ -384,8 +438,129 @@ def check_one(address):
     print("\n  Kryptsig cannot see holder concentration, dev wallet, or LP lock.")
 
 
+def selftest():
+    """Validate every external dependency. Exits non-zero on any failure."""
+    fails, warns = [], []
+
+    def ok(label, detail=""):
+        print(f"  PASS  {label}" + (f"   {detail}" if detail else ""))
+
+    def bad(label, detail=""):
+        print(f"  FAIL  {label}" + (f"   {detail}" if detail else ""))
+        fails.append(label)
+
+    def warn(label, detail=""):
+        print(f"  WARN  {label}" + (f"   {detail}" if detail else ""))
+        warns.append(label)
+
+    print("\nKryptsig selftest\n" + "=" * 58)
+
+    # 1 -- credentials
+    print("\n[1] credentials")
+    if CG_KEY:
+        ok("CG_API_KEY set", f"keyed mode, {GT}")
+    else:
+        warn("CG_API_KEY missing",
+             "keyless -- CoinGecko docs say unsuitable for scheduled polling")
+    if os.environ.get("NTFY_TOPIC"):
+        ok("NTFY_TOPIC set")
+    else:
+        bad("NTFY_TOPIC missing", "alerts would be printed, not delivered")
+
+    # 2 -- can we reach the API at all
+    print("\n[2] discovery endpoint")
+    data = get(f"/networks/{NET}/pools", "?page=1&sort=h24_volume_usd_desc")
+    if not data:
+        bad("GET /networks/solana/pools", "no response -- see error above")
+        print(f"\n{len(fails)} failure(s). Cannot continue.\n")
+        sys.exit(1)
+    pools = data.get("data") or []
+    if not pools:
+        bad("discovery returned 0 pools", "response shape may have changed")
+        sys.exit(1)
+    ok("discovery endpoint", f"{len(pools)} pools returned")
+
+    # 3 -- do the fields the parser needs actually exist
+    print("\n[3] pool field contract")
+    attrs = pools[0].get("attributes") or {}
+    for f in POOL_FIELDS:
+        if f in attrs:
+            ok(f"attributes.{f}")
+        else:
+            bad(f"attributes.{f}", "MISSING -- parser will read 0.0")
+    for parent, child in NESTED_FIELDS:
+        if isinstance(attrs.get(parent), dict) and child in attrs[parent]:
+            ok(f"attributes.{parent}.{child}")
+        else:
+            bad(f"attributes.{parent}.{child}", "MISSING")
+
+    tx1 = (attrs.get("transactions") or {}).get("h1") or {}
+    for f in ("buyers", "sellers"):
+        if f in tx1:
+            ok(f"transactions.h1.{f}")
+        else:
+            bad(f"transactions.h1.{f}",
+                "MISSING -- buyer-count gate cannot work")
+
+    # 4 -- market_cap_usd nullability (GeckoTerminal FAQ: null when
+    #      supply unverified). Several gates divide by it.
+    print("\n[4] market_cap_usd coverage")
+    have = sum(1 for p in pools
+               if (p.get("attributes") or {}).get("market_cap_usd"))
+    pct = have / max(len(pools), 1)
+    if pct >= 0.5:
+        ok("market_cap_usd populated", f"{have}/{len(pools)} pools")
+    else:
+        warn("market_cap_usd often null", f"only {have}/{len(pools)} "
+             "-- falling back to fdv_usd for tier/turnover/ratio")
+
+    # 5 -- OHLCV, the baseline source
+    print("\n[5] ohlcv endpoint")
+    paddr = attrs.get("address")
+    base, n = backfill(paddr) if paddr else (None, 0)
+    if n == 0:
+        bad("ohlcv_list", "no candles parsed -- baselines cannot be built")
+    elif n < MIN_BASELINE_OBS:
+        warn("ohlcv thin", f"{n} candles (need {MIN_BASELINE_OBS})")
+    else:
+        ok("ohlcv endpoint", f"{n} candles, median ${base:,.0f}/hr")
+
+    # 6 -- batch endpoint used for every poll
+    print("\n[6] multi-pool endpoint")
+    addrs = [(p.get("attributes") or {}).get("address")
+             for p in pools[:3]]
+    addrs = [a for a in addrs if a]
+    multi = get(f"/networks/{NET}/pools/multi/{','.join(addrs)}") if addrs else None
+    got = len((multi or {}).get("data") or [])
+    if got:
+        ok("multi endpoint", f"{got}/{len(addrs)} pools returned")
+    else:
+        bad("multi endpoint", "polling would return nothing every run")
+
+    # 7 -- notification delivery
+    print("\n[7] notification")
+    if os.environ.get("NTFY_TOPIC"):
+        notify("Kryptsig selftest", "Selftest reached your device. Pipe works.")
+        ok("ntfy publish sent", "check your phone")
+    else:
+        bad("ntfy skipped", "no topic")
+
+    print("\n" + "=" * 58)
+    print(f"{CALLS['n']} api calls | {len(fails)} failure(s) | {len(warns)} warning(s)")
+    if fails:
+        print("\nSelftest FAILED:")
+        for f in fails:
+            print(f"  - {f}")
+        sys.exit(1)
+    print("\nSelftest passed.\n")
+
+
 # ----------------------------------------------------------------------
 def main():
+    if "--selftest" in sys.argv:
+        selftest()
+        return
+
     if "--check" in sys.argv:
         i = sys.argv.index("--check")
         if i + 1 < len(sys.argv):
@@ -402,8 +577,9 @@ def main():
 
     fixture = load_json("fixture.json", {}).get("pools", []) if dry else []
     if not dry:
-        print(f"discovery: +{discover(state)} "
-              f"(tracking {len(state['pools'])})\n")
+        added = discover(state)
+        print(f"discovery: page {state.get('next_page', 1) - 1 or 8}, "
+              f"+{added} (tracking {len(state['pools'])})\n")
 
         pending = [a for a, v in state["pools"].items() if needs_baseline(v)]
         for addr in pending[:BACKFILL_BUDGET]:
@@ -419,7 +595,7 @@ def main():
     ready = [a for a, v in state["pools"].items() if v.get("baseline")]
     batches = [fixture] if dry else [ready[i:i+30] for i in range(0, len(ready), 30)]
 
-    alerts, logged, liq_seen = 0, 0, {}
+    alerts, logged, evaluated, liq_seen = 0, 0, 0, {}
 
     for batch in batches:
         if dry:
@@ -439,6 +615,7 @@ def main():
             baseline = entry.get("baseline")
             buyer_base = update_buyer_baseline(entry, m["buyers"])
 
+            evaluated += 1
             fire, reason = evaluate(m, baseline, state["last_alert"].get(addr),
                                     buyer_base)
             print(f"{m['name'][:26]:<26} {reason}")
@@ -474,8 +651,41 @@ def main():
     with open(STATE_FILE, "w") as fh:
         json.dump(state, fh, indent=1, sort_keys=True)
 
-    print(f"\n{stamp} | tracking {len(state['pools'])} | {len(ready)} live "
-          f"| {logged} logged | {dropped} pruned | {alerts} alert(s)")
+    mode = "keyed" if CG_KEY else "KEYLESS (expect 429s)"
+    projected = CALLS["n"] * 24 * 30
+    pct = projected / MONTHLY_CREDITS
+    print(f"\nbudget: {CALLS['n']} calls this run -> ~{projected:,}/month "
+          f"({pct:.0%} of {MONTHLY_CREDITS:,})"
+          + ("  ** OVER BUDGET **" if pct > 0.85 else ""))
+    print(f"{stamp} | {mode} | {CALLS['n']} api calls | "
+          f"tracking {len(state['pools'])} | {len(ready)} live | "
+          f"{logged} logged | {dropped} pruned | {alerts} alert(s)")
+
+    # A green check on a run that did nothing is worse than a crash: it
+    # produces weeks of false confidence instead of one visible failure.
+    problems = []
+    if dry:
+        return
+    if CALLS["n"] == 0:
+        problems.append("no API calls were made")
+    if not state["pools"]:
+        problems.append("universe is empty -- discovery is returning nothing")
+    if state["pools"] and not ready:
+        stalled = all(v.get("tries", 0) >= MAX_BACKFILL_TRIES
+                      for v in state["pools"].values())
+        if stalled:
+            problems.append("every backfill attempt exhausted -- "
+                            "ohlcv parsing is broken")
+    if evaluated == 0 and ready:
+        problems.append(f"{len(ready)} pools have baselines but none were "
+                        "evaluated -- multi endpoint returned nothing")
+
+    if problems:
+        print("\nRUN UNHEALTHY -- failing so this is visible in Actions:")
+        for p in problems:
+            print(f"  - {p}")
+        print("\nRun `python kryptsig.py --selftest` to isolate the cause.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
