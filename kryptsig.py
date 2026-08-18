@@ -116,7 +116,7 @@ JOURNAL_FILE       = "journal.csv"   # YOURS. Kryptsig never overwrites it.
 # budget; watching the few already stirring is cheap and cuts detection
 # latency from 60 minutes to 15 -- the difference between catching a fast
 # mover and having the ceiling reject it as TOO LATE.
-FULL_SCAN_HOURS  = 2.0     # discovery + backfill + poll everything
+FULL_SCAN_HOURS  = 1.0     # discovery + backfill + poll everything
 HOT_MULTIPLE     = 1.5     # volume vs baseline that earns a hot-list slot
 HOT_CHG_1H       = 2.0     # ...or this much price movement
 HOT_MAX          = 30      # one multi call
@@ -148,7 +148,11 @@ MAX_RETRIES = 4
 # billable call. A hard per-run ceiling means a bug cannot burn the month's
 # budget in an afternoon -- the run degrades instead of the quota dying.
 MONTHLY_CREDITS   = 10_000
-MAX_CALLS_PER_RUN = 14
+THROTTLE_AT       = 1.10   # GitHub's scheduler is unreliable, so guessing a
+                           # safe cadence is guessing. Measure spend instead:
+                           # if we are >10% ahead of the month's pace, force
+                           # cheap HOT scans until back on track.
+MAX_CALLS_PER_RUN = 18
 CALLS = {"n": 0, "capped": False}
 
 # Fields the parser depends on. Declared here so --selftest can verify the
@@ -322,7 +326,7 @@ def audit_summary(mint):
     verdict: 'block' | 'warn' | 'clear' | 'unknown'"""
     rep, err = rc_get(f"/tokens/{mint}/report")
     if err or not isinstance(rep, dict):
-        return "unknown", f"rugcheck unavailable ({err})", []
+        return "unknown", f"rugcheck unavailable ({err})", [], {}
 
     fails, notes = [], []
     tok = dig(rep, "token", default={}) or {}
@@ -386,10 +390,23 @@ def audit_summary(mint):
     if nets:
         notes.append(f"{nets} insider network(s)")
 
+    # Provenance. These were arriving in every report and being discarded.
+    # A launchpad implies a distribution mechanism and a pre-built audience;
+    # a creator with 40 prior tokens is a serial deployer. Neither is proven
+    # to predict anything -- log them so the question becomes answerable.
+    pad = dig(rep, "launchpad") or dig(rep, "deployPlatform") or ""
+    ctok = dig(rep, "creatorTokens")
+    ncreated = len(ctok) if isinstance(ctok, list) else ctok
+    if pad:
+        notes.append(f"via {pad}")
+    if isinstance(ncreated, int) and ncreated > 1:
+        notes.append(f"creator has {ncreated} tokens")
+
     detail = ", ".join(notes) if notes else "no detail"
+    meta = {"launchpad": pad, "creator_tokens": ncreated}
     if fails:
-        return "block", detail, fails
-    return ("warn", detail, []) if nets else ("clear", detail, [])
+        return "block", detail, fails, meta
+    return (("warn", detail, [], meta) if nets else ("clear", detail, [], meta))
 
 
 def audit(address):
@@ -397,6 +414,25 @@ def audit(address):
     print(f"\nKryptsig audit -- {address}\n" + "=" * 62)
 
     rep, err = rc_get(f"/tokens/{address}/report")
+
+    # A pool address is not a token mint. If the caller pasted a pool (easy
+    # to do -- it is what --pond used to print), resolve it via GeckoTerminal
+    # rather than dead-ending on "invalid token mint".
+    if err and "invalid token mint" in str(err).lower():
+        print(f"  not a token mint -- trying to resolve as a pool address")
+        pdata = get(f"/networks/{NET}/pools/{address}")
+        attrs = ((pdata or {}).get("data") or {}).get("attributes") or {}
+        rels  = ((pdata or {}).get("data") or {}).get("relationships") or {}
+        mint = ((attrs.get("base_token") or {}).get("address")
+                or (((rels.get("base_token") or {}).get("data") or {})
+                    .get("id", "")).split("_")[-1])
+        if mint:
+            print(f"  resolved pool -> mint {mint}\n")
+            address = mint
+            rep, err = rc_get(f"/tokens/{address}/report")
+        else:
+            print("  could not resolve -- paste the token mint instead")
+
     if err:
         print(f"\nUNAVAILABLE  {err}")
         print("\nCheck rugcheck.xyz in a browser instead.")
@@ -584,6 +620,19 @@ def audit(address):
     else:
         unknown.append("top holders")
 
+    # ---- provenance -------------------------------------------------------
+    pad = dig(rep, "launchpad") or dig(rep, "deployPlatform")
+    ctok = dig(rep, "creatorTokens")
+    n_created = len(ctok) if isinstance(ctok, list) else ctok
+    if pad or n_created:
+        print("\n[5] provenance")
+        if pad:
+            print(f"        launchpad        {pad}")
+        if n_created:
+            print(f"        creator tokens   {n_created}"
+                  + ("   <- serial deployer" if isinstance(n_created, int)
+                     and n_created >= 5 else ""))
+
     # ---- verdict ----------------------------------------------------------
     print("\n" + "=" * 62)
     if fails:
@@ -688,22 +737,12 @@ def liquidity_ok(m):
 # hours it may have $40k and a baseline. If we reject it at admission we never
 # see it again, because new_pools only shows it once. So the pond admits
 # early and cheaply; the ALERT gates are what protect you.
-# Tokenised equities (AAPL/SOL, Z500/SOL, SPCX/SOL...) pass every filter
-# legitimately but are not what this hunts, and they occupied ~30% of the
-# pond. An explicit list beats a clever pattern that misfires on a memecoin
-# with a ticker-like name. Add symbols here as you see them.
-EQUITY_SYMBOLS = {
-    "AAPL","MSFT","NVDA","TSLA","AMZN","GOOGL","GOOG","META","NFLX","AMD",
-    "INTC","SPY","QQQ","IWM","DIA","COIN","MSTR","HOOD","PLTR","BRK",
-    "SPCX","USWS","Z500","XST","GME","AMC","BABA","DIS","JPM","V","MA",
-    "CRCL","IBIT","GLD","SLV","TQQQ","SQQQ",
-}
-
+# A name-based equity filter was removed here. It produced a false positive
+# on its first day -- Z500 is an Ansem onchain index token, not a stock --
+# and tokenised equities are already excluded in practice by their enormous
+# volume baselines. Guessing what a ticker means added risk, not safety.
 def is_equity(name):
-    """Pool names look like 'AAPL / SOL'. Match the base symbol only."""
-    base = (name or "").split("/")[0].strip().upper()
-    base = base.rstrip("X") if base.endswith("X") and base[:-1] in EQUITY_SYMBOLS else base
-    return base in EQUITY_SYMBOLS
+    return False
 
 
 WATCH_MIN_LIQ = 2_000    # new_pools median liquidity is ~$2k. This is the
@@ -739,14 +778,17 @@ def qualifies(m):
 
 
 def discover(state):
-    """Two sources per run:
-      1. /new_pools  -- freshly created pools. This is where accumulation
-         candidates live. Sorting by volume only surfaces SOL/USDC majors.
-      2. /pools page N (rotating) -- established pools that may re-accelerate.
-    Costs 2 calls."""
+    """Wider intake. MOMO -- a week-old token with 1,428 holders that ran
+    from $170k to $836k -- was never sampled, because one page of new_pools
+    plus one rotating page is ~40 pools out of thousands. The gates were
+    never the problem on that one; the pond was too small to contain it.
+
+    Now: 2 pages of new_pools (births) + 3 rotating pages of top-by-volume
+    (established names that could still wake up). 5 calls instead of 2.
+    """
     added = 0
 
-    def admit(payload):
+    def admit(payload, src):
         nonlocal added
         for pool in (payload or {}).get("data") or []:
             if len(state["pools"]) >= UNIVERSE_CAP:
@@ -760,19 +802,26 @@ def discover(state):
             if ok:
                 state["pools"][addr] = {"name": m["name"], "baseline": None,
                                         "baseline_ts": None, "tries": 0,
-                                        "added": now_iso()}
+                                        "added": now_iso(), "src": src}
                 added += 1
-                print(f"  + {m['name'][:30]:<30} ${m['liquidity']:>9,.0f} liq"
-                      f"  {m['age_days']*24:>5.1f}h")
+                print(f"  + {m['name'][:28]:<28} ${m['liquidity']:>9,.0f} liq"
+                      f"  {m['age_days']*24:>5.1f}h  [{src}]")
 
-    if len(state["pools"]) < UNIVERSE_CAP:
-        admit(get(f"/networks/{NET}/new_pools"))
+    for page in (1, 2):
+        if len(state["pools"]) >= UNIVERSE_CAP:
+            break
+        admit(get(f"/networks/{NET}/new_pools", f"?page={page}"), "new")
 
+    # Rotate three pages per run through the top-by-volume list, so the whole
+    # list is covered every few scans rather than every eight.
     page = state.get("next_page", 1)
-    state["next_page"] = page + 1 if page < 8 else 1
-    if len(state["pools"]) < UNIVERSE_CAP:
+    for _ in range(3):
+        if len(state["pools"]) >= UNIVERSE_CAP:
+            break
         admit(get(f"/networks/{NET}/pools",
-                  f"?page={page}&sort=h24_volume_usd_desc"))
+                  f"?page={page}&sort=h24_volume_usd_desc"), f"top{page}")
+        page = page + 1 if page < 10 else 1
+    state["next_page"] = page
 
     return added
 
@@ -955,6 +1004,8 @@ def alert_body(addr, m, baseline, reason):
         f"TIER {m['tier']} -- {m['tier_note']}\n"
         f"MAX POSITION ${m['max_pos']:,.0f}\n"
         f"AUDIT {m.get('audit','not run')}\n"
+        + (f"LAUNCHPAD {m['launchpad']}\n" if m.get("launchpad") else "")
+        + 
         f"Round-trip cost ~{round_trip_cost(m['max_pos'], m['tier'])*100:.1f}% "
         f"-- breakeven needs +{round_trip_cost(m['max_pos'], m['tier'])*100:.1f}%\n\n"
         f"Market cap ${m['mcap']:,.0f}\n"
@@ -1166,7 +1217,7 @@ def selftest():
     # a pass. This pins a known-bad token so that can never happen silently.
     print("\n[7] golden test (known-bad token)")
     GOLDEN = "zj1jpp7QMveWHLs61vL9KMZf254KvW7j4AAmBF8ry2k"
-    gv, gdetail, gwhy = audit_summary(GOLDEN)
+    gv, gdetail, gwhy, _gmeta = audit_summary(GOLDEN)
     if gv == "unknown":
         warn("golden test", f"rugcheck unreachable -- {gdetail}")
     elif gv == "block":
@@ -1271,6 +1322,7 @@ def main():
                 v.get("attempts", 0),
                 (v.get("added") or "")[5:16].replace("T", " "),
                 addr,
+                v.get("mint", ""),
             ))
         rows.sort(key=lambda r: (r[1] != "yes", r[0]))
         print(f"\nPond: {len(rows)} pools tracked\n" + "=" * 78)
@@ -1286,9 +1338,12 @@ def main():
         print(f"A baseline needs >= {MIN_BASELINE_OBS} candles. An hourly candle only")
         print("exists if trades happened that hour -- so cdl 0 with att > 0")
         print("means the pool has no trading at all, not that it is young.")
-        print("\nFull addresses:")
+        print("\nAddresses  (POOL is the pair, MINT is the token --")
+        print("            audit and rugcheck.xyz both need the MINT)")
         for r in rows:
-            print(f"  {r[6]}  {r[0]}")
+            print(f"  {r[0]}")
+            print(f"    pool  {r[6]}")
+            print(f"    mint  {r[7] or '(not seen yet -- poll again)'}")
         return
 
     if "--audit" in sys.argv:
@@ -1331,12 +1386,25 @@ def main():
                              if a not in stale]
         print(f"purged {len(stale)} grandfathered equity pool(s)")
 
+    month = stamp[:7]
+    if state.get("credit_month") != month:
+        state["credit_month"], state["credits_used"] = month, 0
+    used = state.get("credits_used", 0)
+    elapsed = max(int(stamp[8:10]) / 30.0, 0.01)
+    pace = (used / MONTHLY_CREDITS) / elapsed
+    throttled = pace > THROTTLE_AT
+
     since_full = time.time() - state.get("last_full_scan", 0)
     hot = [a for a in state.get("hot_list", []) if a in state["pools"]]
     # An empty hot list promotes to a full scan rather than polling nothing.
     full_scan = dry or since_full >= FULL_SCAN_HOURS * 3600 or not hot
-    print(f"scan: {'FULL' if full_scan else 'HOT'} "
-          f"({len(hot)} hot, {since_full/3600:.1f}h since last full)\n")
+    if throttled and full_scan and hot and not dry:
+        full_scan = False
+        print(f"THROTTLED: {used:,}/{MONTHLY_CREDITS:,} used, {pace:.0%} of "
+              f"pace -- forcing cheap HOT scan")
+    print(f"scan: {'FULL' if full_scan else 'HOT'} ({len(hot)} hot, "
+          f"{since_full/3600:.1f}h since full, {used:,} credits used, "
+          f"{pace:.0%} of pace)\n")
     if full_scan:
         state["last_full_scan"] = time.time()
 
@@ -1356,7 +1424,7 @@ def main():
         poll_calls = max(1, -(-len(state["pools"]) // 30))
         # Target ~9 calls/run (65% of monthly credits) rather than the hard
         # 14-call ceiling. A large pond should shrink backfill, not the budget.
-        target = 9
+        target = 12
         budget = max(1, min(BACKFILL_BUDGET,
                             target - CALLS["n"] - poll_calls))
 
@@ -1432,6 +1500,8 @@ def main():
             liq_seen[addr] = m
             entry = state["pools"].setdefault(addr, {"name": m["name"]})
             entry["last_liq"] = m["liquidity"]   # after entry exists
+            if m.get("mint"):
+                entry["mint"] = m["mint"]
             baseline = entry.get("baseline")
             buyer_base = update_buyer_baseline(entry, m["buyers"])
 
@@ -1471,10 +1541,13 @@ def main():
                 alerts += 1
                 today_alerts += 1
                 state["last_alert"][addr] = time.time()
-                verdict, detail, why = ("unknown", "no mint address", [])
+                verdict, detail, why, meta = ("unknown", "no mint address",
+                                              [], {})
                 if m.get("mint"):
-                    verdict, detail, why = audit_summary(m["mint"])
+                    verdict, detail, why, meta = audit_summary(m["mint"])
                 m["audit"] = f"{verdict.upper()} -- {detail}"
+                m["launchpad"] = meta.get("launchpad", "")
+                m["creator_tokens"] = meta.get("creator_tokens", "")
 
                 if verdict == "block":
                     print(f"       ^ SUPPRESSED by audit: {'; '.join(why)}")
@@ -1486,12 +1559,14 @@ def main():
                     notify(f"{label}: {m['name'][:28]}",
                            alert_body(addr, m, baseline, reason))
                 append_row(ALERT_FILE,
-                    ["ts","pool","mint","name","signal","tier","multiple","buyer_mult",
+                    ["ts","pool","mint","name","signal","tier","launchpad",
+                     "creator_tokens","multiple","buyer_mult",
                      "turnover","chg_1h","mcap","liquidity","buyer_ratio",
                      "max_position","friction_pct","audit","would_i_buy",
                      "outcome_24h","outcome_72h","net_24h","net_72h"],
                     [stamp, addr, m.get("mint",""), m["name"],
                      m.get("signal",""), m["tier"],
+                     m.get("launchpad",""), m.get("creator_tokens",""),
                      m.get("multiple"), m.get("buyer_mult",""),
                      round(m["turnover"],4), m["chg_1h"], m["mcap"],
                      m["liquidity"], m.get("buyer_ratio"), round(m["max_pos"]),
@@ -1516,6 +1591,7 @@ def main():
             state["hot_list"] = (picked + keep)[:HOT_MAX]
         print(f"hot list: {len(state['hot_list'])} pool(s) for 15-min polling")
 
+    state["credits_used"] = state.get("credits_used", 0) + CALLS["n"]
     state["alerts_today"] = today_alerts
     dropped = prune(state, liq_seen) if not dry else 0
 
