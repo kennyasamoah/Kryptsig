@@ -1,9 +1,7 @@
 {
  "alert_day": "2026-08-18",
  "alerts_today": 0,
- "hot_list": [
-  "5Jm4GnWPt62kphmhEET6rjzzFjvsfNxNqdpEuGwp2U9q"
- ],
+ "hot_list": [],
  "last_alert": {},
  "last_full_scan": 1787022828.4816859,
  "last_heartbeat": 1787017461.2405233,
@@ -112,10 +110,11 @@
     2172,
     1126,
     857,
-    608
+    608,
+    552
    ],
    "last_candles": 9,
-   "last_liq": 227396.4434,
+   "last_liq": 225268.3861,
    "name": "EYE / SOL",
    "tries": 1
   },
