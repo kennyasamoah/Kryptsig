@@ -98,6 +98,16 @@ HEARTBEAT_HOURS    = 24        # prove the system is alive even when silent
 # The ceiling is our single biggest untested assumption. Log what it rejects
 # so the log can refute it.
 CEILING_LOG        = "rejected_late.csv"
+JOURNAL_FILE       = "journal.csv"   # YOURS. Kryptsig never overwrites it.
+
+# Two-speed polling. Watching 150 sleepy pools every 15 minutes wastes the
+# budget; watching the few already stirring is cheap and cuts detection
+# latency from 60 minutes to 15 -- the difference between catching a fast
+# mover and having the ceiling reject it as TOO LATE.
+FULL_SCAN_HOURS  = 2.0     # discovery + backfill + poll everything
+HOT_MULTIPLE     = 1.5     # volume vs baseline that earns a hot-list slot
+HOT_CHG_1H       = 2.0     # ...or this much price movement
+HOT_MAX          = 30      # one multi call
 
 COOLDOWN_HOURS     = 4
 BASELINE_HOURS     = 168         # up to 7 days of hourly candles
@@ -1140,6 +1150,58 @@ def selftest():
 
 # ----------------------------------------------------------------------
 def main():
+    if "--log" in sys.argv:
+        # Append or update one journal row. Keyed by address so repeat calls
+        # for the same token update in place rather than duplicating.
+        args = sys.argv[sys.argv.index("--log") + 1:]
+        if len(args) < 3:
+            print("usage: kryptsig.py --log <address> <field> <value> [note]")
+            print("fields: would_i_buy | entry_mcap | outcome_24h | "
+                  "outcome_72h | note")
+            return
+        addr, field, value = args[0], args[1], args[2]
+        note = " ".join(args[3:]) if len(args) > 3 else ""
+
+        cols = ["address", "name", "signal", "alerted_ts", "would_i_buy",
+                "entry_mcap", "outcome_24h", "outcome_72h", "note",
+                "updated_ts"]
+        rows, found = [], False
+        if os.path.exists(JOURNAL_FILE):
+            with open(JOURNAL_FILE) as fh:
+                rows = list(csv.DictReader(fh))
+        for r in rows:
+            if r.get("address") == addr:
+                found = True
+                if field in cols:
+                    r[field] = value
+                if note:
+                    r["note"] = (r.get("note", "") + " | " + note).strip(" |")
+                r["updated_ts"] = now_iso()
+        if not found:
+            new_row = {c: "" for c in cols}
+            new_row.update({"address": addr, "updated_ts": now_iso()})
+            if field in cols:
+                new_row[field] = value
+            new_row["note"] = note
+            # pull name/signal/timestamp from the alert log if we have it
+            if os.path.exists(ALERT_FILE):
+                with open(ALERT_FILE) as fh:
+                    for a in csv.DictReader(fh):
+                        if addr in (a.get("pool"), a.get("mint")):
+                            new_row["name"] = a.get("name", "")
+                            new_row["signal"] = a.get("signal", "")
+                            new_row["alerted_ts"] = a.get("ts", "")
+            rows.append(new_row)
+
+        with open(JOURNAL_FILE, "w", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=cols, extrasaction="ignore")
+            w.writeheader()
+            w.writerows(rows)
+        print(f"{'updated' if found else 'created'} journal row for {addr}")
+        print(f"  {field} = {value}" + (f"   note: {note}" if note else ""))
+        print(f"\n{len(rows)} row(s) in {JOURNAL_FILE}")
+        return
+
     if "--pond" in sys.argv:
         st = load_json(STATE_FILE, {})
         pools = st.get("pools", {})
@@ -1202,8 +1264,18 @@ def main():
     state.setdefault("last_alert", {})
     stamp = now_iso()
 
+    # One 15-minute cron drives both cadences: do the expensive full scan
+    # only every FULL_SCAN_HOURS, otherwise poll just the hot list.
+    since_full = time.time() - state.get("last_full_scan", 0)
+    hot = [a for a in state.get("hot_list", []) if a in state["pools"]]
+    full_scan = dry or since_full >= FULL_SCAN_HOURS * 3600 or not hot
+    print(f"scan: {'FULL' if full_scan else 'HOT'} "
+          f"({len(hot)} hot, {since_full/3600:.1f}h since last full)\n")
+    if full_scan:
+        state["last_full_scan"] = time.time()
+
     fixture = load_json("fixture.json", {}).get("pools", []) if dry else []
-    if not dry:
+    if not dry and full_scan:
         added = discover(state)
         print(f"discovery: page {state.get('next_page', 1) - 1 or 8}, "
               f"+{added} (tracking {len(state['pools'])})\n")
@@ -1248,7 +1320,7 @@ def main():
     # Poll EVERY pooled token, not just baselined ones. Newborns need their
     # liquidity refreshed so prune() can evict the ones that never grow, and
     # their buyer history has to start accumulating before they mature.
-    watched = list(state["pools"].keys())
+    watched = list(state["pools"].keys()) if full_scan else hot[:HOT_MAX]
     batches = ([fixture] if dry
                else [watched[i:i+30] for i in range(0, len(watched), 30)])
 
@@ -1339,6 +1411,24 @@ def main():
                      round(round_trip_cost(m["max_pos"], m["tier"])*100, 2),
                      m.get("audit",""), "", "", "", "", ""])
 
+    # Anything stirring goes on the hot list for 15-minute polling.
+    if not dry:
+        fresh = []
+        for a, mm in liq_seen.items():
+            b = state["pools"].get(a, {}).get("baseline") or 0
+            if b and (mm["vol_1h"] / b >= HOT_MULTIPLE
+                      or mm["chg_1h"] >= HOT_CHG_1H):
+                fresh.append((mm["vol_1h"] / b if b else 0, a))
+        fresh.sort(reverse=True)
+        picked = [a for _, a in fresh[:HOT_MAX]]
+        if full_scan:
+            state["hot_list"] = picked
+        else:
+            # a hot scan only sees the hot list; keep anything still stirring
+            keep = [a for a in state.get("hot_list", []) if a not in liq_seen]
+            state["hot_list"] = (picked + keep)[:HOT_MAX]
+        print(f"hot list: {len(state['hot_list'])} pool(s) for 15-min polling")
+
     state["alerts_today"] = today_alerts
     dropped = prune(state, liq_seen) if not dry else 0
 
@@ -1351,6 +1441,39 @@ def main():
     print(f"\nbudget: {CALLS['n']} calls this run -> ~{projected:,}/month "
           f"({pct:.0%} of {MONTHLY_CREDITS:,})"
           + ("  ** OVER BUDGET **" if pct > 0.85 else ""))
+
+    # Nudge for outcomes that are due. Without this the log quietly rots --
+    # and the log is the entire point.
+    due = []
+    if not dry and os.path.exists(ALERT_FILE):
+        try:
+            journal = {}
+            if os.path.exists(JOURNAL_FILE):
+                with open(JOURNAL_FILE) as fh:
+                    journal = {r["address"]: r for r in csv.DictReader(fh)}
+            now_ts = time.time()
+            with open(ALERT_FILE) as fh:
+                for a in csv.DictReader(fh):
+                    try:
+                        t = datetime.fromisoformat(a["ts"]).timestamp()
+                    except Exception:
+                        continue
+                    key = a.get("pool", "")
+                    j = journal.get(key, {})
+                    hrs = (now_ts - t) / 3600
+                    if hrs >= 24 and not j.get("outcome_24h"):
+                        due.append((a.get("name", "?"), "24h"))
+                    elif hrs >= 72 and not j.get("outcome_72h"):
+                        due.append((a.get("name", "?"), "72h"))
+        except Exception as e:
+            print(f"  ! outcome check: {e}")
+
+    if due:
+        lines = "\n".join(f"{n[:24]} ({w})" for n, w in due[:6])
+        print(f"\n{len(due)} outcome(s) due to be logged")
+        notify(f"{len(due)} outcome(s) due",
+               f"Alerts waiting on results:\n{lines}\n\n"
+               f"Actions -> mode: log")
 
     # Silence is the expected output. Without a heartbeat, a dead workflow
     # and a quiet market look identical.
