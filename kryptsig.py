@@ -1314,6 +1314,16 @@ def main():
           f"({len(hot)} hot, {since_full/3600:.1f}h since last full)\n")
     if full_scan:
         state["last_full_scan"] = time.time()
+        # The equity filter blocks new admissions but cannot remove pools
+        # admitted before it existed. Purge them here.
+        stale = [a for a, v in state["pools"].items() if is_equity(v.get("name"))]
+        for a in stale:
+            del state["pools"][a]
+            state["last_alert"].pop(a, None)
+        state["hot_list"] = [a for a in state.get("hot_list", [])
+                             if a not in stale]
+        if stale:
+            print(f"purged {len(stale)} grandfathered equity pool(s)")
 
     fixture = load_json("fixture.json", {}).get("pools", []) if dry else []
     if not dry and full_scan:
@@ -1495,9 +1505,19 @@ def main():
     dropped = prune(state, liq_seen) if not dry else 0
 
     mode = "keyed" if CG_KEY else "KEYLESS (expect 429s)"
-    mature = sum(1 for m in liq_seen.values()
-                 if m["liquidity"] >= MIN_LIQ_ABS
-                 and m["age_days"] * 24 >= MIN_AGE_HOURS)
+    # A HOT scan only polls the hot list, so counting "alertable" from what
+    # we just saw would report 1 when the pond has 7. Carry the last full
+    # scan's figure and label it, rather than printing a number that means
+    # something different depending on scan type.
+    if full_scan:
+        mature = sum(1 for m in liq_seen.values()
+                     if m["liquidity"] >= MIN_LIQ_ABS
+                     and m["age_days"] * 24 >= MIN_AGE_HOURS)
+        state["last_mature"] = mature
+        mature_note = ""
+    else:
+        mature = state.get("last_mature", 0)
+        mature_note = " as of last full"
     projected = CALLS["n"] * 24 * 30
     pct = projected / MONTHLY_CREDITS
     print(f"\nbudget: {CALLS['n']} calls this run -> ~{projected:,}/month "
@@ -1555,7 +1575,8 @@ def main():
         json.dump(state, fh, indent=1, sort_keys=True)
 
     print(f"{stamp} | {mode} | {CALLS['n']} api calls | "
-          f"pond {len(state['pools'])} ({mature} alertable, {len(ready)} baselined) "
+          f"pond {len(state['pools'])} ({mature} alertable{mature_note}, "
+          f"{len(ready)} baselined) "
           f"| {logged} logged | {dropped} pruned | {alerts} alert(s)")
 
     # A green check on a run that did nothing is worse than a crash: it
