@@ -12,32 +12,6 @@
  "last_mature": 13,
  "next_page": 4,
  "pools": {
-  "3fFrA4HdKe4UU8wWG2DouMxSJoZ9JxxBW3RmRHhp6EUi": {
-   "added": "2026-08-18T03:28:49+00:00",
-   "attempts": 1,
-   "baseline": 1323768.9677766412,
-   "baseline_ts": "2026-08-18T05:47:12+00:00",
-   "buyer_hist": [
-    551,
-    575,
-    646,
-    683,
-    678,
-    684,
-    675,
-    637,
-    679,
-    571,
-    459,
-    557,
-    604
-   ],
-   "last_candles": 7,
-   "last_liq": 34279.3636,
-   "last_try": "2026-08-18T05:47:12+00:00",
-   "name": "OPENAI / SOL",
-   "tries": 1
-  },
   "3nTHEvkpjrsVujETvRjoo5uqbBWjeW6xuQ4CitL6smmR": {
    "added": "2026-08-18T13:13:46+00:00",
    "baseline": null,
@@ -156,10 +130,11 @@
     54,
     43,
     167,
-    110
+    110,
+    77
    ],
    "last_candles": 168,
-   "last_liq": 300838.2565,
+   "last_liq": 290077.7236,
    "last_try": "2026-08-18T03:28:51+00:00",
    "name": "MANLET / SOL",
    "tries": 1
@@ -226,10 +201,11 @@
     96,
     105,
     148,
-    206
+    206,
+    522
    ],
    "last_candles": 168,
-   "last_liq": 152910.5416,
+   "last_liq": 155664.348,
    "last_try": "2026-08-18T08:18:00+00:00",
    "name": "LAYOOO / SOL",
    "tries": 1
