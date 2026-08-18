@@ -59,10 +59,11 @@
    "buyer_hist": [
     551,
     575,
-    646
+    646,
+    683
    ],
    "last_candles": 7,
-   "last_liq": 39539.7116,
+   "last_liq": 35820.1442,
    "last_try": "2026-08-18T05:47:12+00:00",
    "name": "OPENAI / SOL",
    "tries": 1
@@ -157,10 +158,11 @@
     552,
     564,
     519,
-    340
+    340,
+    557
    ],
    "last_candles": 9,
-   "last_liq": 250456.1347,
+   "last_liq": 263813.7888,
    "name": "EYE / SOL",
    "tries": 1
   },
@@ -462,10 +464,11 @@
     50,
     37,
     60,
-    83
+    83,
+    86
    ],
    "last_candles": 13,
-   "last_liq": 463006.6489,
+   "last_liq": 424355.4542,
    "last_try": "2026-08-18T03:28:58+00:00",
    "name": "EYE / SOL",
    "tries": 1
