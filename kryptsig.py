@@ -51,6 +51,27 @@ UNIVERSE_CAP     = 150
 # to have already moved. Buyers arriving BEFORE price goes vertical is
 # accumulation. Buyers arriving AFTER is the crowd -- and the crowd is
 # somebody else's exit.
+# Two signal types with different gates, tagged separately in the log so
+# you can find out which one actually works.
+#
+#   EARLY   -- young token accelerating for the first time. Baseline is only
+#              a few hours of its own infancy, so the bar is lower and the
+#              ceiling tighter: we are trying to be there before the feed.
+#   DORMANT -- established token with a real 7-day baseline waking up. The
+#              comparison means much more, so the bar is higher and the
+#              ceiling wider: a genuine wake-up can move hard and still be
+#              early.
+DORMANT_MIN_AGE_DAYS  = 14
+DORMANT_MIN_CANDLES   = 48      # a full day+ of history, not six hours
+
+DORMANT_SPIKE         = 8.0
+DORMANT_MIN_VOLUME    = 15_000
+DORMANT_MIN_CHG_1H    = 5.0
+DORMANT_MAX_CHG_1H    = 120.0
+DORMANT_MAX_CHG_24H   = 400.0
+DORMANT_MIN_BUYER_MULT = 3.0
+DORMANT_MIN_TURNOVER  = 0.08
+
 SPIKE_MULTIPLE   = 3.0           # volume vs baseline
 MIN_ABS_VOLUME   = 5_000
 MIN_PRICE_CHG_1H = 2.0           # the ramp has started
@@ -82,7 +103,9 @@ COOLDOWN_HOURS     = 4
 BASELINE_HOURS     = 168         # up to 7 days of hourly candles
 MIN_BASELINE_OBS   = 6           # young tokens have short histories
 BASELINE_MAX_AGE_H = 168         # refresh weekly (BUG 2)
-BACKFILL_BUDGET    = 2
+BACKFILL_BUDGET    = 5   # ceiling; the real figure is computed per run from
+                         # remaining call headroom so the pond size cannot
+                         # silently push monthly usage over budget
 MAX_BACKFILL_TRIES = 3           # then give up (BUG 3)
 LOG_MIN_MULTIPLE   = 2.0         # throttle the log (BUG 1)
 
@@ -614,6 +637,24 @@ def liquidity_ok(m):
 # hours it may have $40k and a baseline. If we reject it at admission we never
 # see it again, because new_pools only shows it once. So the pond admits
 # early and cheaply; the ALERT gates are what protect you.
+# Tokenised equities (AAPL/SOL, Z500/SOL, SPCX/SOL...) pass every filter
+# legitimately but are not what this hunts, and they occupied ~30% of the
+# pond. An explicit list beats a clever pattern that misfires on a memecoin
+# with a ticker-like name. Add symbols here as you see them.
+EQUITY_SYMBOLS = {
+    "AAPL","MSFT","NVDA","TSLA","AMZN","GOOGL","GOOG","META","NFLX","AMD",
+    "INTC","SPY","QQQ","IWM","DIA","COIN","MSTR","HOOD","PLTR","BRK",
+    "SPCX","USWS","Z500","XST","GME","AMC","BABA","DIS","JPM","V","MA",
+    "CRCL","IBIT","GLD","SLV","TQQQ","SQQQ",
+}
+
+def is_equity(name):
+    """Pool names look like 'AAPL / SOL'. Match the base symbol only."""
+    base = (name or "").split("/")[0].strip().upper()
+    base = base.rstrip("X") if base.endswith("X") and base[:-1] in EQUITY_SYMBOLS else base
+    return base in EQUITY_SYMBOLS
+
+
 WATCH_MIN_LIQ = 2_000    # new_pools median liquidity is ~$2k. This is the
                          # launch firehose; we admit cheaply and evict fast.
 # Eviction is trajectory-based. new_pools tokens start near $2k; reaching the
@@ -625,6 +666,8 @@ MATURITY_HOURS = 24      # grew but never cleared the alert floor -> dead
 
 def admissible(m):
     """Loose. Just: is this plausibly worth watching as it matures?"""
+    if is_equity(m.get("name")):
+        return False, "tokenised equity"
     if m["liquidity"] < WATCH_MIN_LIQ:
         return False, f"liquidity ${m['liquidity']:,.0f} < ${WATCH_MIN_LIQ:,}"
     if m["mcap"] and m["mcap"] > MAX_MCAP:
@@ -742,6 +785,19 @@ def too_young_for_baseline(entry):
            entry.get("tries", 0) > 0 and entry.get("young", False)
 
 
+def backfill_priority(entry):
+    """Lower sorts first. Pools that returned candles are close to a
+    baseline; pools that returned NOTHING have no trading at all and should
+    not keep jumping the queue ahead of them."""
+    n = entry.get("last_candles", 0)
+    attempts = entry.get("attempts", 0)
+    if attempts == 0:
+        return (0, 0)            # never tried -- highest priority
+    if n > 0:
+        return (1, -n)           # partial history -- closest to ready
+    return (2, attempts)         # zero candles, tried before -- back off
+
+
 def needs_baseline(entry):
     """None, or older than a week (BUG 2), and not exhausted (BUG 3)."""
     if entry.get("tries", 0) >= MAX_BACKFILL_TRIES and not entry.get("baseline"):
@@ -759,60 +815,80 @@ def needs_baseline(entry):
     return age_h > BASELINE_MAX_AGE_H
 
 
-def evaluate(m, baseline, last_alert, buyer_base=None):
-    """Fire on ACCUMULATION: buyers arriving BEFORE price goes vertical."""
+def evaluate(m, baseline, last_alert, buyer_base=None, candles=0):
+    """Two signal types. DORMANT is checked first: an established token with
+    a real 7-day baseline waking up is a stronger claim than a young token
+    accelerating, and it earns a wider price ceiling."""
     ok, why = liquidity_ok(m)
     if not ok:
         return False, why
-    if m["age_days"] * 24 < MIN_AGE_HOURS:
-        return False, f"{m['age_days']*24:.1f}h old -- too young to alert"
+    age_h = m["age_days"] * 24
+    if age_h < MIN_AGE_HOURS:
+        return False, f"{age_h:.1f}h old -- too young to alert"
     if not baseline or baseline <= 0:
         return False, "no baseline yet"
 
+    dormant = (m["age_days"] >= DORMANT_MIN_AGE_DAYS
+               and candles >= DORMANT_MIN_CANDLES)
+    m["signal"] = "dormant" if dormant else "early"
+
+    if dormant:
+        spike, minvol   = DORMANT_SPIKE, DORMANT_MIN_VOLUME
+        lo, hi, hi24    = (DORMANT_MIN_CHG_1H, DORMANT_MAX_CHG_1H,
+                           DORMANT_MAX_CHG_24H)
+        bmult, turn     = DORMANT_MIN_BUYER_MULT, DORMANT_MIN_TURNOVER
+    else:
+        spike, minvol   = SPIKE_MULTIPLE, MIN_ABS_VOLUME
+        lo, hi, hi24    = (MIN_PRICE_CHG_1H, MAX_PRICE_CHG_1H,
+                           MAX_PRICE_CHG_24H)
+        bmult, turn     = MIN_BUYER_MULT, MIN_TURNOVER
+
+    tag = m["signal"].upper()
     mult = m["vol_1h"] / baseline
     m["multiple"] = round(mult, 1)
     ratio = m["buyers"] / max(m["sellers"], 1)
     m["buyer_ratio"] = round(ratio, 2)
 
-    if mult < SPIKE_MULTIPLE:
-        return False, f"{mult:.1f}x baseline (need {SPIKE_MULTIPLE}x)"
-    if m["vol_1h"] < MIN_ABS_VOLUME:
-        return False, f"{mult:.1f}x but only ${m['vol_1h']:,.0f}"
+    if mult < spike:
+        return False, f"[{tag}] {mult:.1f}x baseline (need {spike}x)"
+    if m["vol_1h"] < minvol:
+        return False, f"[{tag}] {mult:.1f}x but only ${m['vol_1h']:,.0f}"
 
-    # ---- THE CEILING: what separates early from somebody else's exit ----
-    if m["chg_1h"] < MIN_PRICE_CHG_1H:
-        return False, f"{mult:.1f}x volume, price flat ({m['chg_1h']:+.1f}%)"
-    if m["chg_1h"] > MAX_PRICE_CHG_1H:
+    if m["chg_1h"] < lo:
+        return False, f"[{tag}] {mult:.1f}x volume, price flat ({m['chg_1h']:+.1f}%)"
+    if m["chg_1h"] > hi:
         m["ceiling_reject"] = True
-        return False, (f"TOO LATE -- already {m['chg_1h']:+.0f}% this hour "
-                       f"(ceiling +{MAX_PRICE_CHG_1H:.0f}%)")
-    if m["chg_24h"] > MAX_PRICE_CHG_24H:
+        return False, (f"[{tag}] TOO LATE -- already {m['chg_1h']:+.0f}% this "
+                       f"hour (ceiling +{hi:.0f}%)")
+    if m["chg_24h"] > hi24:
         m["ceiling_reject"] = True
-        return False, f"TOO LATE -- already {m['chg_24h']:+.0f}% in 24h"
+        return False, f"[{tag}] TOO LATE -- already {m['chg_24h']:+.0f}% in 24h"
 
     if ratio < MIN_BUYER_RATIO:
-        return False, f"buy/sell {ratio:.2f} -- distribution, not accumulation"
+        return False, f"[{tag}] buy/sell {ratio:.2f} -- distribution"
 
     if buyer_base:
-        bmult = m["buyers"] / max(buyer_base, 1)
-        m["buyer_mult"] = round(bmult, 1)
-        if bmult < MIN_BUYER_MULT:
-            return False, (f"{mult:.1f}x volume but buyers only {bmult:.1f}x "
-                           f"-- same wallets churning")
-    if m["turnover"] < MIN_TURNOVER:
-        return False, f"turnover {m['turnover']:.1%} -- asleep for its size"
+        bm = m["buyers"] / max(buyer_base, 1)
+        m["buyer_mult"] = round(bm, 1)
+        if bm < bmult:
+            return False, (f"[{tag}] {mult:.1f}x volume but buyers only "
+                           f"{bm:.1f}x -- same wallets churning")
+    if m["turnover"] < turn:
+        return False, f"[{tag}] turnover {m['turnover']:.1%} -- asleep for its size"
 
     if last_alert and (time.time() - last_alert) < COOLDOWN_HOURS * 3600:
         return False, "cooldown"
 
-    bm = f", buyers {m.get('buyer_mult','?')}x" if buyer_base else ""
-    return True, (f"ACCUMULATING: {mult:.1f}x vol{bm}, {m['chg_1h']:+.1f}% 1h "
-                  f"(under +{MAX_PRICE_CHG_1H:.0f}% ceiling), {ratio:.1f} buy/sell")
+    bstr = f", buyers {m.get('buyer_mult','?')}x" if buyer_base else ""
+    lead = ("DORMANT BREAK" if dormant else "ACCUMULATING")
+    return True, (f"{lead}: {mult:.1f}x vol{bstr}, {m['chg_1h']:+.1f}% 1h "
+                  f"(ceiling +{hi:.0f}%), {ratio:.1f} buy/sell, "
+                  f"{m['age_days']:.0f}d old")
 
 
 def alert_body(addr, m, baseline, reason):
     return (
-        f"{m['name']}\n{reason}\n\n"
+        f"{m['name']}  [{m.get('signal','?').upper()}]\n{reason}\n\n"
         f"TIER {m['tier']} -- {m['tier_note']}\n"
         f"MAX POSITION ${m['max_pos']:,.0f}\n"
         f"AUDIT {m.get('audit','not run')}\n"
@@ -1077,23 +1153,24 @@ def main():
                 "yes" if v.get("baseline") else "no",
                 f"${v['baseline']:,.0f}/hr" if v.get("baseline") else "-",
                 v.get("last_candles", 0),
-                v.get("tries", 0),
+                v.get("attempts", 0),
                 (v.get("added") or "")[5:16].replace("T", " "),
                 addr,
             ))
         rows.sort(key=lambda r: (r[1] != "yes", r[0]))
         print(f"\nPond: {len(rows)} pools tracked\n" + "=" * 78)
         print(f"{'name':<28} {'base':<5} {'baseline':<12} {'cdl':>4} "
-              f"{'try':>3}  {'added':<12}")
+              f"{'att':>3}  {'added':<12}")
         print("-" * 78)
         for r in rows:
             print(f"{r[0]:<28} {r[1]:<5} {r[2]:<12} {r[3]:>4} {r[4]:>3}  {r[5]:<12}")
         ready = sum(1 for r in rows if r[1] == "yes")
         print("-" * 78)
         print(f"{ready} baselined (can alert), {len(rows)-ready} still warming up")
-        print("\nA pool needs >= %d hourly candles for a baseline. Young pools"
-              % MIN_BASELINE_OBS)
-        print("show cdl < that and are retried without burning their try budget.")
+        print(f"\ncdl = hourly candles returned, att = backfill attempts.")
+        print(f"A baseline needs >= {MIN_BASELINE_OBS} candles. An hourly candle only")
+        print("exists if trades happened that hour -- so cdl 0 with att > 0")
+        print("means the pool has no trading at all, not that it is young.")
         print("\nFull addresses:")
         for r in rows:
             print(f"  {r[6]}  {r[0]}")
@@ -1136,12 +1213,26 @@ def main():
         # occupy every backfill slot forever and starve the mature pools that
         # WOULD succeed. Symptom: "6 alertable, 2 baselined" for hours.
         # Try the oldest first; they are the ones that can actually succeed.
+        # Spend only the headroom left after discovery (2) and polling
+        # (one call per 30 pools), keeping 2 calls in reserve for retries.
+        poll_calls = max(1, -(-len(state["pools"]) // 30))
+        # Target ~9 calls/run (65% of monthly credits) rather than the hard
+        # 14-call ceiling. A large pond should shrink backfill, not the budget.
+        target = 9
+        budget = max(1, min(BACKFILL_BUDGET,
+                            target - CALLS["n"] - poll_calls))
+
         pending = [a for a, v in state["pools"].items() if needs_baseline(v)]
-        pending.sort(key=lambda a: state["pools"][a].get("added", ""))
-        for addr in pending[:BACKFILL_BUDGET]:
+        pending.sort(key=lambda a: backfill_priority(state["pools"][a]))
+        if pending:
+            print(f"  backfill budget this run: {budget} "
+                  f"({len(pending)} pending)")
+        for addr in pending[:budget]:
             base, n = backfill(addr)
             e = state["pools"][addr]
+            e["attempts"] = e.get("attempts", 0) + 1   # always increments
             e["last_candles"] = n
+            e["last_try"] = now_iso()
             # only count it as a failed attempt if there was enough history
             # and we still could not build a baseline
             if base or n >= MIN_BASELINE_OBS:
@@ -1187,7 +1278,7 @@ def main():
 
             evaluated += 1
             fire, reason = evaluate(m, baseline, state["last_alert"].get(addr),
-                                    buyer_base)
+                                    buyer_base, entry.get("last_candles", 0))
             print(f"{m['name'][:26]:<26} {reason}")
 
             if m.get("multiple", 0) >= LOG_MIN_MULTIPLE or fire:   # BUG 1
@@ -1205,9 +1296,10 @@ def main():
             # log what the ceiling rejects, so the log can refute the ceiling
             if m.get("ceiling_reject"):
                 append_row(CEILING_LOG,
-                    ["ts","pool","mint","name","chg_1h","chg_24h","mcap",
+                    ["ts","pool","mint","name","signal","chg_1h","chg_24h","mcap",
                      "liquidity","multiple","outcome_24h","outcome_72h"],
-                    [stamp, addr, m.get("mint",""), m["name"], m["chg_1h"],
+                    [stamp, addr, m.get("mint",""), m["name"],
+                     m.get("signal",""), m["chg_1h"],
                      m["chg_24h"], m["mcap"], m["liquidity"],
                      m.get("multiple",""), "", ""])
 
@@ -1230,14 +1322,17 @@ def main():
                     alerts -= 1
                     today_alerts -= 1
                 else:
-                    notify(f"WAKE-UP: {m['name'][:30]}",
+                    label = ("DORMANT BREAK" if m.get("signal") == "dormant"
+                             else "ACCUMULATING")
+                    notify(f"{label}: {m['name'][:28]}",
                            alert_body(addr, m, baseline, reason))
                 append_row(ALERT_FILE,
-                    ["ts","pool","mint","name","tier","multiple","buyer_mult",
+                    ["ts","pool","mint","name","signal","tier","multiple","buyer_mult",
                      "turnover","chg_1h","mcap","liquidity","buyer_ratio",
                      "max_position","friction_pct","audit","would_i_buy",
                      "outcome_24h","outcome_72h","net_24h","net_72h"],
-                    [stamp, addr, m.get("mint",""), m["name"], m["tier"],
+                    [stamp, addr, m.get("mint",""), m["name"],
+                     m.get("signal",""), m["tier"],
                      m.get("multiple"), m.get("buyer_mult",""),
                      round(m["turnover"],4), m["chg_1h"], m["mcap"],
                      m["liquidity"], m.get("buyer_ratio"), round(m["max_pos"]),
