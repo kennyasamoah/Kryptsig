@@ -290,23 +290,35 @@ def audit_summary(mint):
     if dig(rep, "rugged") is True:
         fails.append("flagged rugged")
 
-    # LP: worst defensible view, impossible values treated as failure
-    views = []
+    # LP. Do NOT take the minimum across every market: a token with one
+    # deep locked pool and a $2 unlocked side pool would report 0% and get
+    # blocked. Only two views are meaningful --
+    #   (a) dollars locked / dollars pooled across all markets
+    #   (b) the DEEPEST market's own reported figure
+    # Take the lower of those two, bounded to a possible range.
     tot = lock = 0.0
+    deepest_pool = deepest_pct = None
     for m_ in dig(rep, "markets", default=[]) or []:
         lp = dig(m_, "lp", default={}) or {}
         b = dig(lp, "baseUSD")
         l = dig(lp, "lpLockedUSD")
         p = as_pct(dig(lp, "lpLockedPct"))
-        if isinstance(b, (int, float)) and b > 0:
-            tot += b * 2
-            if isinstance(l, (int, float)):
-                lock += l
-            if p is not None:
-                views.append(p)
-    if tot > 0 and lock > 0:
+        if not isinstance(b, (int, float)) or b <= 0:
+            continue
+        pool = b * 2                      # both sides of the AMM
+        tot += pool
+        if isinstance(l, (int, float)):
+            lock += l
+        if deepest_pool is None or pool > deepest_pool:
+            deepest_pool, deepest_pct = pool, p
+
+    views = []
+    if tot > 0:
         views.append(lock / tot)
+    if deepest_pct is not None:
+        views.append(deepest_pct)
     usable = [v for v in views if 0 <= v <= 1.02]
+
     if not usable:
         fails.append("LP lock unverifiable -- treat as unlocked")
     else:
@@ -1017,7 +1029,15 @@ def selftest():
     if gv == "unknown":
         warn("golden test", f"rugcheck unreachable -- {gdetail}")
     elif gv == "block":
-        ok("golden test", f"correctly blocked: {'; '.join(gwhy)[:60]}")
+        reason = "; ".join(gwhy)
+        ok("golden test", f"correctly blocked: {reason[:60]}")
+        # A pass here is not enough. If the LP figure reads 0% the gate is
+        # probably taking the minimum across tiny side pools, which would
+        # block nearly every multi-pool token and produce silence you would
+        # mistake for a quiet market.
+        if "LP only 0%" in reason:
+            bad("golden test detail",
+                "LP computed as 0% -- gate is over-blocking, not working")
     else:
         bad("golden test",
             f"known-bad token returned '{gv}' -- LP gate is broken. {gdetail}")
