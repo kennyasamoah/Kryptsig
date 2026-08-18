@@ -306,40 +306,48 @@ def audit(address):
     # ---- LP lock ----------------------------------------------------------
     print("\n[3] liquidity lock")
     markets = dig(rep, "markets", default=[]) or []
-    lowest = None
+    # Weight by DOLLARS, not by market count. A token can list eight pools
+    # where seven hold $0 -- an empty pool cannot be drained, so counting it
+    # as "0% locked" understates safety just as badly as taking the best
+    # market overstates it. What matters is: of the money actually pooled,
+    # how much of it is locked?
+    total_usd = locked_usd = 0.0
+    live = 0
     for i, m in enumerate(markets):
         lp = dig(m, "lp", default={}) or {}
         locked = as_pct(dig(lp, "lpLockedPct", "lpLockedPercentage"))
-        usd = dig(lp, "lpLockedUSD", "lpLockedUsd")
-        label = f"market {i+1}"
-        if locked is None:
-            print(f"  ?     {label:<20} lp lock not reported")
-        else:
-            print(f"        {label:<20} {locked*100:.1f}% locked"
-                  + (f", ${usd:,.0f}" if isinstance(usd, (int, float)) else ""))
-            # Use the WORST market, not the best. A token can have one clean
-            # pool and another with withdrawable liquidity; your exit routes
-            # through whichever is deepest, and that may be the unlocked one.
-            lowest = locked if lowest is None else min(lowest, locked)
+        lusd = dig(lp, "lpLockedUSD", "lpLockedUsd")
+        busd = dig(lp, "baseUSD", "lpTotalUSD")
+        if not isinstance(lusd, (int, float)):
+            continue
+        # infer the pool's total value from locked USD and locked %
+        pool_usd = (lusd / locked) if (locked and locked > 0) else (busd or lusd)
+        if not pool_usd:
+            continue
+        live += 1
+        total_usd += pool_usd
+        locked_usd += lusd
+        print(f"        market {i+1}: ${pool_usd:,.0f} pooled, "
+              f"${lusd:,.0f} locked ({(locked or 0)*100:.0f}%)")
         if i == 0 and lp:
             print(f"        lp fields: {', '.join(sorted(lp)[:10])}")
 
-    lockers = dig(rep, "lockers", default={}) or {}
-    if lockers:
-        print(f"        lockers reported: {len(lockers)}")
+    print(f"        {live} market(s) with liquidity, "
+          f"{len(markets) - live} empty")
 
-    if lowest is None:
+    if total_usd <= 0:
         print("  ?     lp locked            not reported")
         unknown.append("LP lock")
     else:
-        bad = lowest < MIN_LP_LOCKED
-        print(f"  {'FAIL' if bad else 'ok  '}  {'worst market lock':<20} "
-              f"{lowest*100:.1f}%   (need {MIN_LP_LOCKED*100:.0f}%)")
+        weighted = locked_usd / total_usd
+        bad = weighted < MIN_LP_LOCKED
+        print(f"  {'FAIL' if bad else 'ok  '}  {'lp locked (weighted)':<20} "
+              f"{weighted*100:.1f}%   (${locked_usd:,.0f} of ${total_usd:,.0f})")
         if bad:
-            fails.append(f"LP only {lowest*100:.0f}% locked -- "
-                         f"{100-lowest*100:.0f}% withdrawable")
-        print("        NOTE: compare this against the LP figure on")
-        print("        rugcheck.xyz. If they disagree, trust the lower one.")
+            fails.append(f"only {weighted*100:.0f}% of pooled liquidity locked "
+                         f"-- ${total_usd - locked_usd:,.0f} withdrawable")
+        print("        Cross-check against rugcheck.xyz. If it shows a lower")
+        print("        number, trust the lower one and find out why.")
 
     # ---- distribution -----------------------------------------------------
     print("\n[4] distribution")
