@@ -3,9 +3,7 @@
  "alerts_today": 0,
  "hot_list": [
   "3fFrA4HdKe4UU8wWG2DouMxSJoZ9JxxBW3RmRHhp6EUi",
-  "68C62WPYiiNZxprbuaMj2ULXpiTDKcs5xsX7kBGnyajR",
   "HZp4qwbMUCdwj6ATZCpUZCKeAhBZmWSwj7kLMgYA6Ztg",
-  "CD5HDt23sjGud5VTWsv51BMPey2Qf9qH5cyswWmjBDdq",
   "5Jm4GnWPt62kphmhEET6rjzzFjvsfNxNqdpEuGwp2U9q"
  ],
  "last_alert": {},
@@ -60,10 +58,11 @@
    "baseline_ts": "2026-08-18T05:47:12+00:00",
    "buyer_hist": [
     551,
-    575
+    575,
+    646
    ],
    "last_candles": 7,
-   "last_liq": 32108.5987,
+   "last_liq": 39539.7116,
    "last_try": "2026-08-18T05:47:12+00:00",
    "name": "OPENAI / SOL",
    "tries": 1
@@ -157,10 +156,11 @@
     608,
     552,
     564,
-    519
+    519,
+    340
    ],
    "last_candles": 9,
-   "last_liq": 238633.8129,
+   "last_liq": 250456.1347,
    "name": "EYE / SOL",
    "tries": 1
   },
@@ -191,10 +191,11 @@
     72,
     49,
     45,
-    48
+    48,
+    43
    ],
    "last_candles": 168,
-   "last_liq": 352471.0871,
+   "last_liq": 349968.44,
    "last_try": "2026-08-18T03:28:51+00:00",
    "name": "MANLET / SOL",
    "tries": 1
@@ -284,10 +285,11 @@
    "buyer_hist": [
     843,
     678,
-    415
+    415,
+    318
    ],
    "last_candles": 10,
-   "last_liq": 108466.4352,
+   "last_liq": 103976.6981,
    "last_try": "2026-08-18T03:28:53+00:00",
    "name": "BULLSHIT / SOL",
    "tries": 1
@@ -459,10 +461,11 @@
    "buyer_hist": [
     50,
     37,
-    60
+    60,
+    83
    ],
    "last_candles": 13,
-   "last_liq": 460739.3604,
+   "last_liq": 463006.6489,
    "last_try": "2026-08-18T03:28:58+00:00",
    "name": "EYE / SOL",
    "tries": 1
