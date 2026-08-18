@@ -813,9 +813,15 @@ def discover(state):
             m = parse_pool(attrs)
             ok, _ = admissible(m)
             if ok:
+                # Store liquidity and mint NOW. Discovery already knows
+                # both; withholding them meant every freshly admitted pool
+                # looked eligible for backfill, so five calls went to $2k
+                # pools while $136k candidates waited.
                 state["pools"][addr] = {"name": m["name"], "baseline": None,
                                         "baseline_ts": None, "tries": 0,
-                                        "added": now_iso(), "src": src}
+                                        "added": now_iso(), "src": src,
+                                        "last_liq": m["liquidity"],
+                                        "mint": extract_mint(pool)}
                 added += 1
                 print(f"  + {m['name'][:28]:<28} ${m['liquidity']:>9,.0f} liq"
                       f"  {m['age_days']*24:>5.1f}h  [{src}]")
@@ -1437,7 +1443,10 @@ def main():
         poll_calls = max(1, -(-len(state["pools"]) // 30))
         # Target ~9 calls/run (65% of monthly credits) rather than the hard
         # 14-call ceiling. A large pond should shrink backfill, not the budget.
-        target = 12
+        # Hourly full scans with 5 discovery calls run ~11-12 calls. Keep
+        # the target at 10 so a growing pond shrinks backfill rather than
+        # pushing monthly spend past the throttle.
+        target = 10
         budget = max(1, min(BACKFILL_BUDGET,
                             target - CALLS["n"] - poll_calls))
 
