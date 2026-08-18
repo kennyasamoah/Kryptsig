@@ -668,6 +668,8 @@ def discover(state):
                                         "baseline_ts": None, "tries": 0,
                                         "added": now_iso()}
                 added += 1
+                print(f"  + {m['name'][:30]:<30} ${m['liquidity']:>9,.0f} liq"
+                      f"  {m['age_days']*24:>5.1f}h")
 
     if len(state["pools"]) < UNIVERSE_CAP:
         admit(get(f"/networks/{NET}/new_pools"))
@@ -1062,6 +1064,41 @@ def selftest():
 
 # ----------------------------------------------------------------------
 def main():
+    if "--pond" in sys.argv:
+        st = load_json(STATE_FILE, {})
+        pools = st.get("pools", {})
+        if not pools:
+            print("Pond is empty. Run a poll first.")
+            return
+        rows = []
+        for addr, v in pools.items():
+            rows.append((
+                v.get("name", "?")[:28],
+                "yes" if v.get("baseline") else "no",
+                f"${v['baseline']:,.0f}/hr" if v.get("baseline") else "-",
+                v.get("last_candles", 0),
+                v.get("tries", 0),
+                (v.get("added") or "")[5:16].replace("T", " "),
+                addr,
+            ))
+        rows.sort(key=lambda r: (r[1] != "yes", r[0]))
+        print(f"\nPond: {len(rows)} pools tracked\n" + "=" * 78)
+        print(f"{'name':<28} {'base':<5} {'baseline':<12} {'cdl':>4} "
+              f"{'try':>3}  {'added':<12}")
+        print("-" * 78)
+        for r in rows:
+            print(f"{r[0]:<28} {r[1]:<5} {r[2]:<12} {r[3]:>4} {r[4]:>3}  {r[5]:<12}")
+        ready = sum(1 for r in rows if r[1] == "yes")
+        print("-" * 78)
+        print(f"{ready} baselined (can alert), {len(rows)-ready} still warming up")
+        print("\nA pool needs >= %d hourly candles for a baseline. Young pools"
+              % MIN_BASELINE_OBS)
+        print("show cdl < that and are retried without burning their try budget.")
+        print("\nFull addresses:")
+        for r in rows:
+            print(f"  {r[6]}  {r[0]}")
+        return
+
     if "--audit" in sys.argv:
         i = sys.argv.index("--audit")
         if i + 1 < len(sys.argv):
@@ -1094,7 +1131,13 @@ def main():
         print(f"discovery: page {state.get('next_page', 1) - 1 or 8}, "
               f"+{added} (tracking {len(state['pools'])})\n")
 
+        # Young pools cannot produce a baseline (too few candles) and by
+        # design do not burn their retry budget -- so in insertion order they
+        # occupy every backfill slot forever and starve the mature pools that
+        # WOULD succeed. Symptom: "6 alertable, 2 baselined" for hours.
+        # Try the oldest first; they are the ones that can actually succeed.
         pending = [a for a, v in state["pools"].items() if needs_baseline(v)]
+        pending.sort(key=lambda a: state["pools"][a].get("added", ""))
         for addr in pending[:BACKFILL_BUDGET]:
             base, n = backfill(addr)
             e = state["pools"][addr]
