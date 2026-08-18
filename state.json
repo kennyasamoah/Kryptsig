@@ -2,8 +2,7 @@
  "alert_day": "2026-08-18",
  "alerts_today": 0,
  "hot_list": [
-  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
-  "5Jm4GnWPt62kphmhEET6rjzzFjvsfNxNqdpEuGwp2U9q"
+  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo"
  ],
  "last_alert": {},
  "last_full_scan": 1787067503.0854292,
@@ -79,10 +78,11 @@
     499,
     660,
     1618,
-    1578
+    1578,
+    453
    ],
    "last_candles": 9,
-   "last_liq": 241374.1603,
+   "last_liq": 232532.263,
    "name": "EYE / SOL",
    "tries": 1
   },
@@ -215,10 +215,11 @@
     206,
     522,
     163,
-    154
+    154,
+    250
    ],
    "last_candles": 168,
-   "last_liq": 151736.9171,
+   "last_liq": 152409.8464,
    "last_try": "2026-08-18T08:18:00+00:00",
    "name": "LAYOOO / SOL",
    "tries": 1
