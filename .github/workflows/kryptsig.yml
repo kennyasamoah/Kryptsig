@@ -9,7 +9,7 @@ on:
         description: "run = poll | selftest = check dependencies | audit = check one token"
         type: choice
         default: run
-        options: [run, selftest, audit]
+        options: [run, selftest, audit, pond]
       address:
         description: "Token address (audit mode only)"
         type: string
@@ -37,6 +37,10 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           CG_API_KEY: ${{ secrets.CG_API_KEY }}
         run: python kryptsig.py --selftest
+
+      - name: Show pond
+        if: inputs.mode == 'pond'
+        run: python kryptsig.py --pond
 
       - name: Audit token
         if: inputs.mode == 'audit'
