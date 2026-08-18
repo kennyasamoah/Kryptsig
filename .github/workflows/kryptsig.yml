@@ -2,16 +2,28 @@ name: kryptsig
 
 on:
   schedule:
-    - cron: "7 * * * *"      # hourly, offset off the hour to dodge peak scheduling
+    - cron: "*/15 * * * *"   # one cron; the script picks FULL vs HOT
   workflow_dispatch:
     inputs:
       mode:
         description: "run = poll | selftest = check dependencies | audit = check one token"
         type: choice
         default: run
-        options: [run, selftest, audit, pond]
+        options: [run, selftest, audit, pond, log]
       address:
-        description: "Token address (audit mode only)"
+        description: "Token address (audit and log modes)"
+        type: string
+        required: false
+      field:
+        description: "log mode: would_i_buy | entry_mcap | outcome_24h | outcome_72h | note"
+        type: string
+        required: false
+      value:
+        description: "log mode: the value to record"
+        type: string
+        required: false
+      note:
+        description: "log mode: optional free text"
         type: string
         required: false
 
@@ -38,6 +50,16 @@ jobs:
           CG_API_KEY: ${{ secrets.CG_API_KEY }}
         run: python kryptsig.py --selftest
 
+      - name: Journal entry
+        if: inputs.mode == 'log'
+        run: |
+          if [ -z "${{ inputs.address }}" ] || [ -z "${{ inputs.field }}" ]; then
+            echo "log mode needs address and field"
+            exit 1
+          fi
+          python kryptsig.py --log "${{ inputs.address }}" \
+            "${{ inputs.field }}" "${{ inputs.value }}" "${{ inputs.note }}"
+
       - name: Show pond
         if: inputs.mode == 'pond'
         run: python kryptsig.py --pond
@@ -62,7 +84,7 @@ jobs:
         run: python kryptsig.py
 
       - name: Persist state and logs
-        if: always() && (inputs.mode == '' || inputs.mode == 'run')
+        if: always() && (inputs.mode == '' || inputs.mode == 'run' || inputs.mode == 'log')
         run: |
           set -e
           git config user.name  "kryptsig"
