@@ -664,6 +664,19 @@ def audit(address):
 
 
 # ----------------------------------------------------------------------
+def extract_mint(pool):
+    """GeckoTerminal is JSON:API -- `relationships` sits BESIDE `attributes`,
+    not inside it, and the base token id is formatted 'solana_<mint>'.
+    Reading it off attributes (as I first did) silently returned nothing."""
+    if not isinstance(pool, dict):
+        return ""
+    rel = (pool.get("relationships") or {}).get("base_token") or {}
+    tid = (rel.get("data") or {}).get("id", "")
+    if "_" in tid:
+        return tid.split("_", 1)[1]
+    return tid or ""
+
+
 def parse_pool(attrs):
     tx1 = (attrs.get("transactions") or {}).get("h1") or {}
     age_days = 0.0
@@ -1486,17 +1499,18 @@ def main():
 
     for batch in batches:
         if dry:
-            records = [(p["address"], p["attributes"]) for p in batch]
+            records = [(p["address"], p["attributes"], p) for p in batch]
         else:
             data = get(f"/networks/{NET}/pools/multi/{','.join(batch)}")
             records = [((p.get("attributes") or {}).get("address"),
-                        p.get("attributes") or {})
+                        p.get("attributes") or {}, p)
                        for p in ((data or {}).get("data") or [])]
 
-        for addr, attrs in records:
+        for addr, attrs, pool_obj in records:
             if not addr:
                 continue
             m = enrich(parse_pool(attrs))
+            m["mint"] = extract_mint(pool_obj) or m.get("mint", "")
             liq_seen[addr] = m
             entry = state["pools"].setdefault(addr, {"name": m["name"]})
             entry["last_liq"] = m["liquidity"]   # after entry exists
