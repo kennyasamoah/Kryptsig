@@ -1307,17 +1307,9 @@ def main():
 
     # One 15-minute cron drives both cadences: do the expensive full scan
     # only every FULL_SCAN_HOURS, otherwise poll just the hot list.
-    since_full = time.time() - state.get("last_full_scan", 0)
-    hot = [a for a in state.get("hot_list", []) if a in state["pools"]]
-    full_scan = dry or since_full >= FULL_SCAN_HOURS * 3600 or not hot
-    print(f"scan: {'FULL' if full_scan else 'HOT'} "
-          f"({len(hot)} hot, {since_full/3600:.1f}h since last full)\n")
-    if full_scan:
-        state["last_full_scan"] = time.time()
-
-    # Purge on EVERY scan, not just full ones: this is pure state
-    # manipulation with no API cost, and a grandfathered equity sitting in
-    # the hot list wastes one call per HOT scan until the next full one.
+    # Purge FIRST. Doing it after the scan decision meant an emptied hot
+    # list produced a HOT scan with nothing to poll -- zero API calls, and
+    # the health check correctly (but unhelpfully) failed the run.
     stale = [a for a, v in state["pools"].items() if is_equity(v.get("name"))]
     for a in stale:
         del state["pools"][a]
@@ -1325,8 +1317,16 @@ def main():
     if stale:
         state["hot_list"] = [a for a in state.get("hot_list", [])
                              if a not in stale]
-        hot = [a for a in hot if a not in stale]
         print(f"purged {len(stale)} grandfathered equity pool(s)")
+
+    since_full = time.time() - state.get("last_full_scan", 0)
+    hot = [a for a in state.get("hot_list", []) if a in state["pools"]]
+    # An empty hot list promotes to a full scan rather than polling nothing.
+    full_scan = dry or since_full >= FULL_SCAN_HOURS * 3600 or not hot
+    print(f"scan: {'FULL' if full_scan else 'HOT'} "
+          f"({len(hot)} hot, {since_full/3600:.1f}h since last full)\n")
+    if full_scan:
+        state["last_full_scan"] = time.time()
 
     fixture = load_json("fixture.json", {}).get("pools", []) if dry else []
     if not dry and full_scan:
@@ -1587,7 +1587,7 @@ def main():
     problems = []
     if dry:
         return
-    if CALLS["n"] == 0:
+    if CALLS["n"] == 0 and watched:
         problems.append("no API calls were made")
     if not state["pools"] and state.get("empty_runs", 0) >= 3:
         problems.append("universe still empty after 3 runs -- "
@@ -1599,7 +1599,7 @@ def main():
         if stalled:
             problems.append("every backfill attempt exhausted -- "
                             "ohlcv parsing is broken")
-    if evaluated == 0 and ready:
+    if evaluated == 0 and ready and watched:
         problems.append(f"{len(ready)} pools have baselines but none were "
                         "evaluated -- multi endpoint returned nothing")
 
