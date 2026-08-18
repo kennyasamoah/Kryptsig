@@ -1405,8 +1405,8 @@ def main():
                 continue
             m = enrich(parse_pool(attrs))
             liq_seen[addr] = m
-            entry["last_liq"] = m["liquidity"]
             entry = state["pools"].setdefault(addr, {"name": m["name"]})
+            entry["last_liq"] = m["liquidity"]   # after entry exists
             baseline = entry.get("baseline")
             buyer_base = update_buyer_baseline(entry, m["buyers"])
 
