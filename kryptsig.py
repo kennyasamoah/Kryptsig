@@ -35,9 +35,19 @@ MAX_POSITION_USD = 250           # your actual max. Everything derives from this
 MAX_POOL_PCT     = 0.02          # never exceed 2% of pool -- above that your
                                  # own exit moves the price against you
 
-# $250 at 2% of pool => $12,500. Below this you cannot exit at a price you
-# would accept, at YOUR size. Not arbitrary -- derived.
-MIN_LIQ_ABS      = 12_500
+# Derived from FEES, not slippage -- sizing already handles slippage, since
+# max_pos = min($250, liquidity x 2%). What a floor actually protects against
+# is fixed fees eating a small position:
+#
+#   $0.95 min per side on fomo = $1.90 round trip
+#   $95 position  -> 2.0% fees        <- the practical minimum
+#   $50 position  -> 3.8% fees
+#
+# $95 at 2% of pool => a $4,750 pool. Rounded to $5,000. The old $12,500
+# floor was ~2.5x stricter than its own justification and excluded ~90% of
+# the pond -- including the small pools where nobody else is looking yet.
+MIN_LIQ_ABS      = 5_000
+MIN_POSITION_USD = 95      # below this, fees exceed 2% -- do not bother
 MIN_AGE_HOURS    = 6             # was 14 days. Target is now accumulation,
                                  # not dormancy break -- but we still need
                                  # enough candles for a baseline.
@@ -78,7 +88,9 @@ MIN_PRICE_CHG_1H = 2.0           # the ramp has started
 MAX_PRICE_CHG_1H = 60.0          # ...but has not gone vertical. THE CEILING.
 MAX_PRICE_CHG_24H = 300.0        # and did not already run yesterday
 MIN_BUYER_RATIO  = 1.3           # unique buyers vs sellers this hour
-MIN_BUYER_MULT   = 2.5           # unique buyers vs their own baseline
+MIN_BUYER_MULT   = 3.0           # raised with the liquidity floor drop:
+                                 # thinner pools are easier to fake, so the
+                                 # hardest-to-fake metric carries more weight
 MIN_TURNOVER     = 0.05
 
 # ======================================================================
@@ -443,7 +455,13 @@ def audit(address):
     # Rather than keep guessing at a derived figure, report several views and
     # gate on the WORST. An impossible value is treated as a failure, never
     # as a pass -- a broken calculation must not read as safety.
+    # Some markets have NO LP token at all (lpMint is the System Program
+    # null address, lpTotalSupply 0). Their "0% locked" is missing data, not
+    # a finding -- but treating it as safe would loosen a safety gate on an
+    # assumption. So: report both views, gate on the conservative one.
+    NULL_MINT = "11111111111111111111111111111111"
     per_market, total_side, locked_usd = [], 0.0, 0.0
+    unaccounted_usd, accounted_side, accounted_locked = 0.0, 0.0, 0.0
     for i, m in enumerate(markets):
         lp = dig(m, "lp", default={}) or {}
         locked = as_pct(dig(lp, "lpLockedPct", "lpLockedPercentage"))
@@ -457,9 +475,19 @@ def audit(address):
             locked_usd += lusd
         if locked is not None:
             per_market.append((pool_est, locked))
+        no_lp = (str(dig(lp, "lpMint", default="")) == NULL_MINT
+                 or (dig(lp, "lpTotalSupply") == 0
+                     and dig(lp, "lpCurrentSupply") == 0))
+        tag = "  <- no LP token; 0% is missing data, not unlocked" if no_lp else ""
+        if no_lp:
+            unaccounted_usd += pool_est
+        else:
+            accounted_side += pool_est
+            if isinstance(lusd, (int, float)):
+                accounted_locked += lusd
         print(f"        market {i+1}: ~${pool_est:,.0f} pool "
               f"(baseUSD ${busd:,.0f} x2), ${lusd or 0:,.0f} locked"
-              f"  [{(locked or 0)*100:.0f}% reported]")
+              f"  [{(locked or 0)*100:.0f}% reported]{tag}")
         if i == 0 and lp:
             print(f"        raw lp: " + ", ".join(
                 f"{k}={lp[k]}" for k in sorted(lp)
@@ -468,10 +496,8 @@ def audit(address):
 
     views = []
     if per_market:
-        # deepest pool's own reported figure
         deepest = max(per_market, key=lambda x: x[0])
         views.append(("deepest market (reported)", deepest[1]))
-        # share of total pooled dollars sitting in a market that is locked
         lockedish = sum(p for p, l in per_market if l >= 0.9)
         allpools = sum(p for p, _ in per_market)
         if allpools:
@@ -479,9 +505,20 @@ def audit(address):
     if total_side > 0 and locked_usd > 0:
         views.append(("dollar-weighted", locked_usd / total_side))
 
+    if accounted_side > 0:
+        views.append(("LP-accounted markets only", accounted_locked / accounted_side))
+
     for label, v in views:
         flag = "  (impossible -- ignored)" if v > 1.02 else ""
         print(f"        {label:<26} {v*100:.1f}%{flag}")
+
+    if unaccounted_usd > 0:
+        share = unaccounted_usd / (unaccounted_usd + accounted_side) \
+            if (unaccounted_usd + accounted_side) else 0
+        print(f"\n        ${unaccounted_usd:,.0f} ({share:.0%} of pooled value) sits in")
+        print("        markets with no LP token accounting. Whether that")
+        print("        liquidity is protocol-locked or withdrawable cannot be")
+        print("        determined from this API. Gate uses the worse reading.")
 
     usable = [v for _, v in views if 0 <= v <= 1.02]
     if not usable:
@@ -614,15 +651,16 @@ def risk_tier(liquidity):
     the tier tells you what you are taking on."""
     pos = min(MAX_POSITION_USD, liquidity * MAX_POOL_PCT)
     pct = pos / liquidity if liquidity else 1.0
+    fees = (max(pos * FEE_PCT_PER_SIDE, FEE_MIN_USD) * 2) / pos if pos else 1
     if liquidity >= 100_000:
         tier, note = "A", f"deep -- ${pos:,.0f} is {pct:.2%} of pool"
     elif liquidity >= 50_000:
         tier, note = "B", f"adequate -- ${pos:,.0f} is {pct:.2%} of pool"
-    elif liquidity >= 25_000:
-        tier, note = "C", f"thin -- ${pos:,.0f} is {pct:.1%} of pool"
+    elif liquidity >= 20_000:
+        tier, note = "C", f"thin -- ${pos:,.0f}, fees {fees:.1%}"
     else:
-        tier, note = "D", (f"VERY THIN -- ${pos:,.0f} is {pct:.1%} of pool, "
-                           f"expect real slippage")
+        tier, note = "D", (f"VERY THIN -- ${pos:,.0f} only, fees {fees:.1%}, "
+                           f"your own exit moves price ~{pct*2:.0%}")
     return tier, pos, note
 
 
@@ -636,8 +674,11 @@ def liquidity_ok(m):
     """Only the derived floor blocks now. Everything above it gets a tier
     and a position cap instead of a rejection."""
     if m["liquidity"] < MIN_LIQ_ABS:
-        return False, (f"liquidity ${m['liquidity']:,.0f} -- a ${MAX_POSITION_USD} "
-                       f"position would be >{MAX_POOL_PCT:.0%} of the pool")
+        return False, (f"liquidity ${m['liquidity']:,.0f} < ${MIN_LIQ_ABS:,} "
+                       f"floor")
+    pos = m["liquidity"] * MAX_POOL_PCT
+    if pos < MIN_POSITION_USD:
+        return False, (f"max position ${pos:,.0f} -- fees would exceed 2%")
     return True, ""
 
 
@@ -1294,7 +1335,27 @@ def main():
         budget = max(1, min(BACKFILL_BUDGET,
                             target - CALLS["n"] - poll_calls))
 
-        pending = [a for a, v in state["pools"].items() if needs_baseline(v)]
+        # A baseline is worthless on a pool that fails the liquidity gate --
+        # evaluate() rejects it before the baseline is ever consulted. Five
+        # slots went to $414-$4,083 pools while a $61k candidate waited.
+        # Only spend backfill on pools that could actually alert.
+        def worth_backfilling(a):
+            v = state["pools"][a]
+            if not needs_baseline(v):
+                return False
+            if is_equity(v.get("name")):
+                return False
+            liq = v.get("last_liq")
+            if liq is not None and liq < MIN_LIQ_ABS:
+                return False        # seen, and too thin to ever alert
+            return True
+
+        pending = [a for a in state["pools"] if worth_backfilling(a)]
+        skipped = sum(1 for a in state["pools"]
+                      if needs_baseline(state["pools"][a])) - len(pending)
+        if skipped:
+            print(f"  ({skipped} pending skipped: below alert liquidity "
+                  f"or equity)")
         pending.sort(key=lambda a: backfill_priority(state["pools"][a]))
         if pending:
             print(f"  backfill budget this run: {budget} "
@@ -1344,6 +1405,7 @@ def main():
                 continue
             m = enrich(parse_pool(attrs))
             liq_seen[addr] = m
+            entry["last_liq"] = m["liquidity"]
             entry = state["pools"].setdefault(addr, {"name": m["name"]})
             baseline = entry.get("baseline")
             buyer_base = update_buyer_baseline(entry, m["buyers"])
