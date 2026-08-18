@@ -1314,16 +1314,19 @@ def main():
           f"({len(hot)} hot, {since_full/3600:.1f}h since last full)\n")
     if full_scan:
         state["last_full_scan"] = time.time()
-        # The equity filter blocks new admissions but cannot remove pools
-        # admitted before it existed. Purge them here.
-        stale = [a for a, v in state["pools"].items() if is_equity(v.get("name"))]
-        for a in stale:
-            del state["pools"][a]
-            state["last_alert"].pop(a, None)
+
+    # Purge on EVERY scan, not just full ones: this is pure state
+    # manipulation with no API cost, and a grandfathered equity sitting in
+    # the hot list wastes one call per HOT scan until the next full one.
+    stale = [a for a, v in state["pools"].items() if is_equity(v.get("name"))]
+    for a in stale:
+        del state["pools"][a]
+        state["last_alert"].pop(a, None)
+    if stale:
         state["hot_list"] = [a for a in state.get("hot_list", [])
                              if a not in stale]
-        if stale:
-            print(f"purged {len(stale)} grandfathered equity pool(s)")
+        hot = [a for a in hot if a not in stale]
+        print(f"purged {len(stale)} grandfathered equity pool(s)")
 
     fixture = load_json("fixture.json", {}).get("pools", []) if dry else []
     if not dry and full_scan:
