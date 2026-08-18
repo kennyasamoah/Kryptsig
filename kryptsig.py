@@ -320,14 +320,21 @@ def audit(address):
         busd = dig(lp, "baseUSD", "lpTotalUSD")
         if not isinstance(lusd, (int, float)):
             continue
-        # infer the pool's total value from locked USD and locked %
-        pool_usd = (lusd / locked) if (locked and locked > 0) else (busd or lusd)
+        # Measure the pool, do not infer it. Deriving pool size as
+        # locked/pct makes pooled == locked whenever pct is 100%, which
+        # silently inflates the weighted result. baseUSD is the real figure.
+        if isinstance(busd, (int, float)) and busd > 0:
+            pool_usd, src = busd, "baseUSD"
+        elif locked and locked > 0:
+            pool_usd, src = lusd / locked, "inferred"
+        else:
+            continue
         if not pool_usd:
             continue
         live += 1
         total_usd += pool_usd
         locked_usd += lusd
-        print(f"        market {i+1}: ${pool_usd:,.0f} pooled, "
+        print(f"        market {i+1}: ${pool_usd:,.0f} pooled [{src}], "
               f"${lusd:,.0f} locked ({(locked or 0)*100:.0f}%)")
         if i == 0 and lp:
             print(f"        lp fields: {', '.join(sorted(lp)[:10])}")
@@ -346,8 +353,10 @@ def audit(address):
         if bad:
             fails.append(f"only {weighted*100:.0f}% of pooled liquidity locked "
                          f"-- ${total_usd - locked_usd:,.0f} withdrawable")
-        print("        Cross-check against rugcheck.xyz. If it shows a lower")
-        print("        number, trust the lower one and find out why.")
+        print("        Cross-check rugcheck.xyz. Different denominators are")
+        print("        possible (burned vs locker-held LP). Take the LOWER of")
+        print("        the two -- an unlocked pool is unrecoverable, and being")
+        print("        wrong in the safe direction costs you one skipped trade.")
 
     # ---- distribution -----------------------------------------------------
     print("\n[4] distribution")
