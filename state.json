@@ -2,15 +2,17 @@
  "alert_day": "2026-08-18",
  "alerts_today": 0,
  "hot_list": [
+  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
   "3fFrA4HdKe4UU8wWG2DouMxSJoZ9JxxBW3RmRHhp6EUi",
-  "HZp4qwbMUCdwj6ATZCpUZCKeAhBZmWSwj7kLMgYA6Ztg",
-  "5Jm4GnWPt62kphmhEET6rjzzFjvsfNxNqdpEuGwp2U9q"
+  "EFHinHjxNnZgmMv1ctZmCKqX8LHTPVzxwFXX9zQtnEB4",
+  "GwTzkbi3ogqYSphVeSMGaBwdkBvEzBo87dmDWyCxd1aj",
+  "CD5HDt23sjGud5VTWsv51BMPey2Qf9qH5cyswWmjBDdq"
  ],
  "last_alert": {},
- "last_full_scan": 1787032026.6265938,
+ "last_full_scan": 1787041075.0707688,
  "last_heartbeat": 1787017461.2405233,
  "last_mature": 12,
- "next_page": 1,
+ "next_page": 2,
  "pools": {
   "2yzjjpRLmMX1NRJjGYs5aTMvHiwWMw9iqW4PoYC9hrVy": {
    "added": "2026-08-18T01:44:14+00:00",
@@ -22,33 +24,13 @@
     94,
     32,
     18,
-    2
-   ],
-   "last_candles": 2,
-   "last_liq": 3186.5207,
-   "last_try": "2026-08-18T02:47:29+00:00",
-   "name": "Bruno / SOL",
-   "tries": 0
-  },
-  "31u92Vq2eScbZFAqimeqNhEhsNc6Yyw4j2AESAgxJc2s": {
-   "added": "2026-08-17T21:47:34+00:00",
-   "attempts": 1,
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    17,
-    17,
-    0,
-    0,
-    0,
-    0,
-    0,
+    2,
     0
    ],
-   "last_candles": 1,
-   "last_liq": 3346.8586,
-   "last_try": "2026-08-18T02:47:31+00:00",
-   "name": "PANIC / USDC",
+   "last_candles": 2,
+   "last_liq": 2880.4855,
+   "last_try": "2026-08-18T02:47:29+00:00",
+   "name": "Bruno / SOL",
    "tries": 0
   },
   "3fFrA4HdKe4UU8wWG2DouMxSJoZ9JxxBW3RmRHhp6EUi": {
@@ -60,32 +42,14 @@
     551,
     575,
     646,
-    683
+    683,
+    678
    ],
    "last_candles": 7,
-   "last_liq": 35820.1442,
+   "last_liq": 38813.9408,
    "last_try": "2026-08-18T05:47:12+00:00",
    "name": "OPENAI / SOL",
    "tries": 1
-  },
-  "3vE82UhfmEmErcy3CKGahfB3iqgqwHvwjeTe6wSsW8fE": {
-   "added": "2026-08-17T23:30:29+00:00",
-   "attempts": 1,
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    5,
-    0,
-    0,
-    0,
-    0,
-    0
-   ],
-   "last_candles": 1,
-   "last_liq": 2341.4037,
-   "last_try": "2026-08-18T02:47:32+00:00",
-   "name": "SOUTHAVEN / SOL",
-   "tries": 0
   },
   "4CfDmztD79i72MpNXeujfqKqTtGzgtJd5eM5MkmZboj3": {
    "added": "2026-08-18T02:47:27+00:00",
@@ -96,10 +60,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_candles": 10,
-   "last_liq": 61493.4518,
+   "last_liq": 61707.856,
    "last_try": "2026-08-18T03:13:55+00:00",
    "name": "GTA6 / SOL",
    "tries": 1
@@ -111,9 +76,10 @@
    "buyer_hist": [
     8,
     8,
+    0,
     0
    ],
-   "last_liq": 3241.4328,
+   "last_liq": 3246.1221,
    "name": "Chud / SOL",
    "tries": 0
   },
@@ -126,10 +92,11 @@
     6,
     6,
     6,
+    0,
     0
    ],
    "last_candles": 1,
-   "last_liq": 2646.6579,
+   "last_liq": 2652.4852,
    "last_try": "2026-08-18T03:13:56+00:00",
    "name": "COPE / SOL",
    "tries": 0
@@ -139,9 +106,10 @@
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
-    1
+    1,
+    0
    ],
-   "last_liq": 3174.7153,
+   "last_liq": 3175.22,
    "name": "FurgerDog / USDC",
    "tries": 0
   },
@@ -159,10 +127,11 @@
     564,
     519,
     340,
-    557
+    557,
+    634
    ],
    "last_candles": 9,
-   "last_liq": 263813.7888,
+   "last_liq": 256027.4719,
    "name": "EYE / SOL",
    "tries": 1
   },
@@ -175,10 +144,11 @@
     4,
     4,
     4,
+    0,
     0
    ],
    "last_candles": 1,
-   "last_liq": 8333.6654,
+   "last_liq": 8351.1237,
    "last_try": "2026-08-18T03:13:58+00:00",
    "name": "FAITH / USDT",
    "tries": 0
@@ -194,10 +164,11 @@
     49,
     45,
     48,
-    43
+    43,
+    54
    ],
    "last_candles": 168,
-   "last_liq": 349968.44,
+   "last_liq": 335986.6529,
    "last_try": "2026-08-18T03:28:51+00:00",
    "name": "MANLET / SOL",
    "tries": 1
@@ -211,60 +182,45 @@
     8,
     8,
     8,
+    0,
     0
    ],
    "last_candles": 1,
-   "last_liq": 2031.5243,
+   "last_liq": 2035.9972,
    "last_try": "2026-08-18T03:14:00+00:00",
    "name": "BERSPE / SOL",
    "tries": 0
   },
   "7HE88GcVooqUH5fzD9NauN8xNre1qsidUvbTxpMcZMwH": {
    "added": "2026-08-18T03:28:49+00:00",
-   "attempts": 1,
+   "attempts": 2,
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
     0,
+    0,
     0
    ],
    "last_candles": 4,
-   "last_liq": 159653.0693,
-   "last_try": "2026-08-18T05:47:16+00:00",
+   "last_liq": 160209.7103,
+   "last_try": "2026-08-18T08:18:04+00:00",
    "name": "CXMT / SOL",
    "tries": 0
   },
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo": {
    "added": "2026-08-18T05:47:10+00:00",
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    141
-   ],
-   "last_liq": 171587.7915,
-   "name": "LAYOOO / SOL",
-   "tries": 0
-  },
-  "ACH7nGGvJEDvWte79y9M8KGFpwHL4FFKrTtqadbtqSCK": {
-   "added": "2026-08-17T21:47:34+00:00",
    "attempts": 1,
-   "baseline": null,
-   "baseline_ts": null,
+   "baseline": 7333.34070622648,
+   "baseline_ts": "2026-08-18T08:18:00+00:00",
    "buyer_hist": [
-    5,
-    5,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0
+    141,
+    67
    ],
-   "last_candles": 2,
-   "last_liq": 2086.9394,
-   "last_try": "2026-08-18T02:47:36+00:00",
-   "name": "BOX / SOL",
-   "tries": 0
+   "last_candles": 168,
+   "last_liq": 166069.0035,
+   "last_try": "2026-08-18T08:18:00+00:00",
+   "name": "LAYOOO / SOL",
+   "tries": 1
   },
   "BKpjkuaoSHwze9vSnRSvr8FPgi36UZQ1Y6yr4LvZw5SM": {
    "added": "2026-08-18T03:13:51+00:00",
@@ -273,9 +229,10 @@
    "buyer_hist": [
     3,
     3,
+    0,
     0
    ],
-   "last_liq": 2226.9966,
+   "last_liq": 2230.2183,
    "name": "Chud / SOL",
    "tries": 0
   },
@@ -288,10 +245,11 @@
     843,
     678,
     415,
-    318
+    318,
+    177
    ],
    "last_candles": 10,
-   "last_liq": 103976.6981,
+   "last_liq": 110203.188,
    "last_try": "2026-08-18T03:28:53+00:00",
    "name": "BULLSHIT / SOL",
    "tries": 1
@@ -307,17 +265,18 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_candles": 1,
-   "last_liq": 10781.3639,
+   "last_liq": 10805.1016,
    "last_try": "2026-08-18T03:14:01+00:00",
    "name": "WRAP / SOL",
    "tries": 0
   },
   "DNEU92K3wTCC7PHijX5q7R1tZMyboHjNWJnkE6wyE6tH": {
    "added": "2026-08-17T22:32:38+00:00",
-   "attempts": 1,
+   "attempts": 2,
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
@@ -327,56 +286,13 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_candles": 4,
-   "last_liq": 285547.9484,
-   "last_try": "2026-08-18T03:28:55+00:00",
+   "last_liq": 286478.5847,
+   "last_try": "2026-08-18T08:18:05+00:00",
    "name": "Basecat / SOL",
-   "tries": 0
-  },
-  "E24kUDJgvEF1fSfWoQJGemExzkEr39FcWcY1RtdgaNHY": {
-   "added": "2026-08-18T05:47:09+00:00",
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    2317
-   ],
-   "last_liq": 48408.6505,
-   "name": "NICE / SOL",
-   "tries": 0
-  },
-  "ECwhj51a2pCvcHViBvzmJGxwEPU68J2gZyh1gnK8z9bg": {
-   "added": "2026-08-17T23:30:29+00:00",
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    9,
-    0,
-    0,
-    0,
-    0,
-    0
-   ],
-   "last_liq": 2067.0045,
-   "name": "SOGGY / SOL",
-   "tries": 0
-  },
-  "EFHinHjxNnZgmMv1ctZmCKqX8LHTPVzxwFXX9zQtnEB4": {
-   "added": "2026-08-18T02:47:27+00:00",
-   "attempts": 1,
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    1004,
-    1029,
-    1042,
-    1004
-   ],
-   "last_candles": 4,
-   "last_liq": 229984.0939,
-   "last_try": "2026-08-18T03:28:56+00:00",
-   "name": "EYE / SOL",
    "tries": 0
   },
   "EYhx6rc1uThaVrbzeejFfY8n4JYpGiTg47PuvisGaktr": {
@@ -387,9 +303,10 @@
     473,
     500,
     509,
-    2
+    2,
+    10
    ],
-   "last_liq": 2381.0169,
+   "last_liq": 2231.511,
    "name": "Dinocat / SOL",
    "tries": 0
   },
@@ -400,29 +317,11 @@
    "buyer_hist": [
     3,
     3,
+    0,
     0
    ],
-   "last_liq": 2153.2339,
+   "last_liq": 2156.3489,
    "name": "Chinchilla / SOL",
-   "tries": 0
-  },
-  "GWGAas7oyaAgRWwSw5bbdRLcBvxfFJLLQiqzRDXYsrLR": {
-   "added": "2026-08-17T21:47:34+00:00",
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    4,
-    4,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0
-   ],
-   "last_candles": 1,
-   "last_liq": 4355.6641,
-   "name": "VOLVAN / SOL",
    "tries": 0
   },
   "GwTzkbi3ogqYSphVeSMGaBwdkBvEzBo87dmDWyCxd1aj": {
@@ -432,10 +331,11 @@
    "baseline_ts": "2026-08-18T05:47:17+00:00",
    "buyer_hist": [
     568,
-    270
+    270,
+    93
    ],
    "last_candles": 27,
-   "last_liq": 82008.3892,
+   "last_liq": 72984.6648,
    "last_try": "2026-08-18T05:47:17+00:00",
    "name": "BILLY / SOL",
    "tries": 1
@@ -447,10 +347,11 @@
    "baseline_ts": null,
    "buyer_hist": [
     0,
+    0,
     0
    ],
    "last_candles": 4,
-   "last_liq": 147022.6268,
+   "last_liq": 147375.8379,
    "last_try": "2026-08-18T05:47:19+00:00",
    "name": "\u94b1\u6765 / SOL",
    "tries": 0
@@ -465,10 +366,11 @@
     37,
     60,
     83,
-    86
+    86,
+    16
    ],
    "last_candles": 13,
-   "last_liq": 424355.4542,
+   "last_liq": 447382.791,
    "last_try": "2026-08-18T03:28:58+00:00",
    "name": "EYE / SOL",
    "tries": 1
