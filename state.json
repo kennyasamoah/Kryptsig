@@ -2,7 +2,7 @@
  "alert_day": "2026-08-18",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 12,
+ "credits_used": 13,
  "hot_list": [
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
   "68C62WPYiiNZxprbuaMj2ULXpiTDKcs5xsX7kBGnyajR"
@@ -195,10 +195,11 @@
     77,
     64,
     71,
-    92
+    92,
+    93
    ],
    "last_candles": 168,
-   "last_liq": 268885.9617,
+   "last_liq": 268578.8878,
    "last_try": "2026-08-18T03:28:51+00:00",
    "mint": "HxQhDGYqyjorgogMJx7YbBHADEDxuHhLnMMmr6VYpyn",
    "name": "MANLET / SOL",
@@ -322,10 +323,11 @@
     154,
     250,
     152,
-    201
+    201,
+    185
    ],
    "last_candles": 168,
-   "last_liq": 144187.2917,
+   "last_liq": 143967.2613,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
