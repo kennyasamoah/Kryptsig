@@ -65,6 +65,19 @@ MIN_TURNOVER     = 0.05
 # ======================================================================
 MAX_FDV_MC_RATIO = 1.5
 
+# Friction on a $250 ticket: ~0.5% or $0.95 min per side on fomo, plus
+# slippage both ways. Logging raw price change overstates every outcome.
+FEE_PCT_PER_SIDE   = 0.005
+FEE_MIN_USD        = 0.95
+SLIPPAGE_ASSUMED   = 0.01      # each side, tier-adjusted below
+
+MAX_ALERTS_PER_DAY = 3         # $750 of correlated exposure is the ceiling
+HEARTBEAT_HOURS    = 24        # prove the system is alive even when silent
+
+# The ceiling is our single biggest untested assumption. Log what it rejects
+# so the log can refute it.
+CEILING_LOG        = "rejected_late.csv"
+
 COOLDOWN_HOURS     = 4
 BASELINE_HOURS     = 168         # up to 7 days of hourly candles
 MIN_BASELINE_OBS   = 6           # young tokens have short histories
@@ -104,6 +117,9 @@ NESTED_FIELDS = [
     ("volume_usd", "h1"), ("volume_usd", "h24"),
     ("price_change_percentage", "h1"),
 ]
+
+RC_MIN_LOCK_NOTE = ("RugCheck publishes LP Locked % on its token page. "
+                    "When it disagrees with the computed figure, use theirs.")
 
 # --------------------------------------------------------------- RugCheck
 # Used ONLY by --audit, never by the hourly poll. A failure here can never
@@ -241,11 +257,82 @@ def dig(d, *names, default=None):
     return default
 
 
+def round_trip_cost(position_usd, tier):
+    """Total friction as a fraction of position. A '+5% winner' at $250 is
+    roughly flat once this is paid, so outcomes must be logged net."""
+    fee = max(position_usd * FEE_PCT_PER_SIDE, FEE_MIN_USD) * 2
+    slip = {"A": 0.005, "B": 0.01, "C": 0.02, "D": 0.035}.get(tier, 0.02) * 2
+    return (fee / position_usd) + slip
+
+
 def as_pct(v):
     """Accept either 0-1 or 0-100 and normalise to a fraction."""
     if not isinstance(v, (int, float)):
         return None
     return v / 100.0 if v > 1.5 else v
+
+
+def audit_summary(mint):
+    """Compact audit for the alert path. Returns (verdict, detail, fails).
+    verdict: 'block' | 'warn' | 'clear' | 'unknown'"""
+    rep, err = rc_get(f"/tokens/{mint}/report")
+    if err or not isinstance(rep, dict):
+        return "unknown", f"rugcheck unavailable ({err})", []
+
+    fails, notes = [], []
+    tok = dig(rep, "token", default={}) or {}
+    for label, key in (("mint authority", "mintAuthority"),
+                       ("freeze authority", "freezeAuthority")):
+        if key in rep or key in tok:
+            if rep.get(key, tok.get(key)) not in (None, "", "null"):
+                fails.append(f"{label} ACTIVE")
+
+    if dig(rep, "rugged") is True:
+        fails.append("flagged rugged")
+
+    # LP: worst defensible view, impossible values treated as failure
+    views = []
+    tot = lock = 0.0
+    for m_ in dig(rep, "markets", default=[]) or []:
+        lp = dig(m_, "lp", default={}) or {}
+        b = dig(lp, "baseUSD")
+        l = dig(lp, "lpLockedUSD")
+        p = as_pct(dig(lp, "lpLockedPct"))
+        if isinstance(b, (int, float)) and b > 0:
+            tot += b * 2
+            if isinstance(l, (int, float)):
+                lock += l
+            if p is not None:
+                views.append(p)
+    if tot > 0 and lock > 0:
+        views.append(lock / tot)
+    usable = [v for v in views if 0 <= v <= 1.02]
+    if not usable:
+        fails.append("LP lock unverifiable -- treat as unlocked")
+    else:
+        worst = min(usable)
+        if worst < MIN_LP_LOCKED:
+            fails.append(f"LP only {worst*100:.0f}% locked")
+        notes.append(f"LP {worst*100:.0f}%")
+
+    top = dig(rep, "topHolders", "top_holders", default=[]) or []
+    if top:
+        raw = [dig(h, "pct", "percentage") for h in top[:10]]
+        raw = [r for r in raw if isinstance(r, (int, float))]
+        t = sum(raw)
+        t10 = t / 100.0 if t > 1.5 else t
+        notes.append(f"top10 {t10*100:.0f}%")
+        if t10 > MAX_TOP10:
+            fails.append(f"top-10 {t10*100:.0f}%")
+
+    nets = len(dig(rep, "insiderNetworks", default=[]) or [])
+    if nets:
+        notes.append(f"{nets} insider network(s)")
+
+    detail = ", ".join(notes) if notes else "no detail"
+    if fails:
+        return "block", detail, fails
+    return ("warn", detail, []) if nets else ("clear", detail, [])
 
 
 def audit(address):
@@ -306,57 +393,64 @@ def audit(address):
     # ---- LP lock ----------------------------------------------------------
     print("\n[3] liquidity lock")
     markets = dig(rep, "markets", default=[]) or []
-    # Weight by DOLLARS, not by market count. A token can list eight pools
-    # where seven hold $0 -- an empty pool cannot be drained, so counting it
-    # as "0% locked" understates safety just as badly as taking the best
-    # market overstates it. What matters is: of the money actually pooled,
-    # how much of it is locked?
-    total_usd = locked_usd = 0.0
-    live = 0
+    # I computed this four different ways and got 100%, 0%, 84.6% and 142.1%.
+    # baseUSD is ONE SIDE of a two-sided pool; lpLockedUSD is the whole LP.
+    # Rather than keep guessing at a derived figure, report several views and
+    # gate on the WORST. An impossible value is treated as a failure, never
+    # as a pass -- a broken calculation must not read as safety.
+    per_market, total_side, locked_usd = [], 0.0, 0.0
     for i, m in enumerate(markets):
         lp = dig(m, "lp", default={}) or {}
         locked = as_pct(dig(lp, "lpLockedPct", "lpLockedPercentage"))
         lusd = dig(lp, "lpLockedUSD", "lpLockedUsd")
         busd = dig(lp, "baseUSD", "lpTotalUSD")
-        if not isinstance(lusd, (int, float)):
+        if not isinstance(busd, (int, float)) or busd <= 0:
             continue
-        # Measure the pool, do not infer it. Deriving pool size as
-        # locked/pct makes pooled == locked whenever pct is 100%, which
-        # silently inflates the weighted result. baseUSD is the real figure.
-        if isinstance(busd, (int, float)) and busd > 0:
-            pool_usd, src = busd, "baseUSD"
-        elif locked and locked > 0:
-            pool_usd, src = lusd / locked, "inferred"
-        else:
-            continue
-        if not pool_usd:
-            continue
-        live += 1
-        total_usd += pool_usd
-        locked_usd += lusd
-        print(f"        market {i+1}: ${pool_usd:,.0f} pooled [{src}], "
-              f"${lusd:,.0f} locked ({(locked or 0)*100:.0f}%)")
+        pool_est = busd * 2          # both sides of the AMM pool
+        total_side += pool_est
+        if isinstance(lusd, (int, float)):
+            locked_usd += lusd
+        if locked is not None:
+            per_market.append((pool_est, locked))
+        print(f"        market {i+1}: ~${pool_est:,.0f} pool "
+              f"(baseUSD ${busd:,.0f} x2), ${lusd or 0:,.0f} locked"
+              f"  [{(locked or 0)*100:.0f}% reported]")
         if i == 0 and lp:
-            print(f"        lp fields: {', '.join(sorted(lp)[:10])}")
+            print(f"        raw lp: " + ", ".join(
+                f"{k}={lp[k]}" for k in sorted(lp)
+                if isinstance(lp[k], (int, float, str, bool))
+            )[:300])
 
-    print(f"        {live} market(s) with liquidity, "
-          f"{len(markets) - live} empty")
+    views = []
+    if per_market:
+        # deepest pool's own reported figure
+        deepest = max(per_market, key=lambda x: x[0])
+        views.append(("deepest market (reported)", deepest[1]))
+        # share of total pooled dollars sitting in a market that is locked
+        lockedish = sum(p for p, l in per_market if l >= 0.9)
+        allpools = sum(p for p, _ in per_market)
+        if allpools:
+            views.append(("share of pools locked", lockedish / allpools))
+    if total_side > 0 and locked_usd > 0:
+        views.append(("dollar-weighted", locked_usd / total_side))
 
-    if total_usd <= 0:
-        print("  ?     lp locked            not reported")
-        unknown.append("LP lock")
+    for label, v in views:
+        flag = "  (impossible -- ignored)" if v > 1.02 else ""
+        print(f"        {label:<26} {v*100:.1f}%{flag}")
+
+    usable = [v for _, v in views if 0 <= v <= 1.02]
+    if not usable:
+        print("  FAIL  lp lock              could not be computed reliably")
+        fails.append("LP lock could not be verified -- treat as unlocked")
     else:
-        weighted = locked_usd / total_usd
-        bad = weighted < MIN_LP_LOCKED
-        print(f"  {'FAIL' if bad else 'ok  '}  {'lp locked (weighted)':<20} "
-              f"{weighted*100:.1f}%   (${locked_usd:,.0f} of ${total_usd:,.0f})")
+        worst = min(usable)
+        bad = worst < MIN_LP_LOCKED
+        print(f"  {'FAIL' if bad else 'ok  '}  {'lp locked (worst view)':<22} "
+              f"{worst*100:.1f}%   (need {MIN_LP_LOCKED*100:.0f}%)")
         if bad:
-            fails.append(f"only {weighted*100:.0f}% of pooled liquidity locked "
-                         f"-- ${total_usd - locked_usd:,.0f} withdrawable")
-        print("        Cross-check rugcheck.xyz. Different denominators are")
-        print("        possible (burned vs locker-held LP). Take the LOWER of")
-        print("        the two -- an unlocked pool is unrecoverable, and being")
-        print("        wrong in the safe direction costs you one skipped trade.")
+            fails.append(f"LP only {worst*100:.0f}% locked on the worst view")
+        print("        RugCheck publishes its own LP Locked % on the token")
+        print("        page. If it is lower than this, use theirs.")
 
     # ---- distribution -----------------------------------------------------
     print("\n[4] distribution")
@@ -461,6 +555,10 @@ def parse_pool(attrs):
         "chg_24h":   num((attrs.get("price_change_percentage") or {}).get("h24")),
         "buyers":    tx1.get("buyers", 0) or 0,
         "sellers":   tx1.get("sellers", 0) or 0,
+        "mint":      ((attrs.get("base_token") or {}).get("address")
+                      or (((attrs.get("relationships") or {}).get("base_token")
+                           or {}).get("data") or {}).get("id", "").split("_")[-1]
+                      or ""),
         "age_days":  round(age_days, 1),
         "turnover":  0.0,   # filled in below once mcap is known
     }
@@ -671,9 +769,11 @@ def evaluate(m, baseline, last_alert, buyer_base=None):
     if m["chg_1h"] < MIN_PRICE_CHG_1H:
         return False, f"{mult:.1f}x volume, price flat ({m['chg_1h']:+.1f}%)"
     if m["chg_1h"] > MAX_PRICE_CHG_1H:
+        m["ceiling_reject"] = True
         return False, (f"TOO LATE -- already {m['chg_1h']:+.0f}% this hour "
                        f"(ceiling +{MAX_PRICE_CHG_1H:.0f}%)")
     if m["chg_24h"] > MAX_PRICE_CHG_24H:
+        m["ceiling_reject"] = True
         return False, f"TOO LATE -- already {m['chg_24h']:+.0f}% in 24h"
 
     if ratio < MIN_BUYER_RATIO:
@@ -700,7 +800,10 @@ def alert_body(addr, m, baseline, reason):
     return (
         f"{m['name']}\n{reason}\n\n"
         f"TIER {m['tier']} -- {m['tier_note']}\n"
-        f"MAX POSITION ${m['max_pos']:,.0f}\n\n"
+        f"MAX POSITION ${m['max_pos']:,.0f}\n"
+        f"AUDIT {m.get('audit','not run')}\n"
+        f"Round-trip cost ~{round_trip_cost(m['max_pos'], m['tier'])*100:.1f}% "
+        f"-- breakeven needs +{round_trip_cost(m['max_pos'], m['tier'])*100:.1f}%\n\n"
         f"Market cap ${m['mcap']:,.0f}\n"
         f"Liquidity  ${m['liquidity']:,.0f}\n"
         f"1h volume  ${m['vol_1h']:,.0f}  vs baseline ${baseline:,.0f}\n"
@@ -982,6 +1085,10 @@ def main():
                else [watched[i:i+30] for i in range(0, len(watched), 30)])
 
     alerts, logged, evaluated, liq_seen = 0, 0, 0, {}
+    day = stamp[:10]
+    if state.get("alert_day") != day:
+        state["alert_day"], state["alerts_today"] = day, 0
+    today_alerts = state.get("alerts_today", 0)
 
     for batch in batches:
         if dry:
@@ -1018,34 +1125,78 @@ def main():
                      m["liquidity"], m["mcap"], m["buyers"], m["sellers"],
                      m["age_days"], int(fire)])
 
+            # log what the ceiling rejects, so the log can refute the ceiling
+            if m.get("ceiling_reject"):
+                append_row(CEILING_LOG,
+                    ["ts","pool","mint","name","chg_1h","chg_24h","mcap",
+                     "liquidity","multiple","outcome_24h","outcome_72h"],
+                    [stamp, addr, m.get("mint",""), m["name"], m["chg_1h"],
+                     m["chg_24h"], m["mcap"], m["liquidity"],
+                     m.get("multiple",""), "", ""])
+
+            if fire and today_alerts >= MAX_ALERTS_PER_DAY:
+                print(f"       ^ suppressed: daily cap "
+                      f"({MAX_ALERTS_PER_DAY}) reached")
+                fire = False
+
             if fire:
                 alerts += 1
+                today_alerts += 1
                 state["last_alert"][addr] = time.time()
-                notify(f"WAKE-UP: {m['name'][:30]}",
-                       alert_body(addr, m, baseline, reason))
-                append_row(ALERT_FILE,
-                    ["ts","pool","name","tier","multiple","buyer_mult","turnover",
-                     "chg_1h","mcap","liquidity","buyer_ratio","max_position",
-                     "would_i_buy","outcome_24h","outcome_72h"],
-                    [stamp, addr, m["name"], m["tier"], m.get("multiple"),
-                     m.get("buyer_mult",""), round(m["turnover"],4), m["chg_1h"],
-                     m["mcap"], m["liquidity"], m.get("buyer_ratio"),
-                     round(m["max_pos"]), "", "", ""])
+                verdict, detail, why = ("unknown", "no mint address", [])
+                if m.get("mint"):
+                    verdict, detail, why = audit_summary(m["mint"])
+                m["audit"] = f"{verdict.upper()} -- {detail}"
 
+                if verdict == "block":
+                    print(f"       ^ SUPPRESSED by audit: {'; '.join(why)}")
+                    alerts -= 1
+                    today_alerts -= 1
+                else:
+                    notify(f"WAKE-UP: {m['name'][:30]}",
+                           alert_body(addr, m, baseline, reason))
+                append_row(ALERT_FILE,
+                    ["ts","pool","mint","name","tier","multiple","buyer_mult",
+                     "turnover","chg_1h","mcap","liquidity","buyer_ratio",
+                     "max_position","friction_pct","audit","would_i_buy",
+                     "outcome_24h","outcome_72h","net_24h","net_72h"],
+                    [stamp, addr, m.get("mint",""), m["name"], m["tier"],
+                     m.get("multiple"), m.get("buyer_mult",""),
+                     round(m["turnover"],4), m["chg_1h"], m["mcap"],
+                     m["liquidity"], m.get("buyer_ratio"), round(m["max_pos"]),
+                     round(round_trip_cost(m["max_pos"], m["tier"])*100, 2),
+                     m.get("audit",""), "", "", "", "", ""])
+
+    state["alerts_today"] = today_alerts
     dropped = prune(state, liq_seen) if not dry else 0
 
-    with open(STATE_FILE, "w") as fh:
-        json.dump(state, fh, indent=1, sort_keys=True)
-
     mode = "keyed" if CG_KEY else "KEYLESS (expect 429s)"
+    mature = sum(1 for m in liq_seen.values()
+                 if m["liquidity"] >= MIN_LIQ_ABS
+                 and m["age_days"] * 24 >= MIN_AGE_HOURS)
     projected = CALLS["n"] * 24 * 30
     pct = projected / MONTHLY_CREDITS
     print(f"\nbudget: {CALLS['n']} calls this run -> ~{projected:,}/month "
           f"({pct:.0%} of {MONTHLY_CREDITS:,})"
           + ("  ** OVER BUDGET **" if pct > 0.85 else ""))
-    mature = sum(1 for m in liq_seen.values()
-                 if m["liquidity"] >= MIN_LIQ_ABS
-                 and m["age_days"] * 24 >= MIN_AGE_HOURS)
+
+    # Silence is the expected output. Without a heartbeat, a dead workflow
+    # and a quiet market look identical.
+    if not dry:
+        last_hb = state.get("last_heartbeat", 0)
+        if alerts == 0 and (time.time() - last_hb) > HEARTBEAT_HOURS * 3600:
+            state["last_heartbeat"] = time.time()
+            notify("Kryptsig heartbeat",
+                   f"Alive. Pond {len(state['pools'])} "
+                   f"({mature} alertable, {len(ready)} baselined).\n"
+                   f"No alerts in {HEARTBEAT_HOURS}h. "
+                   f"Budget {CALLS['n']*24*30:,}/month.")
+        elif alerts:
+            state["last_heartbeat"] = time.time()
+
+    with open(STATE_FILE, "w") as fh:
+        json.dump(state, fh, indent=1, sort_keys=True)
+
     print(f"{stamp} | {mode} | {CALLS['n']} api calls | "
           f"pond {len(state['pools'])} ({mature} alertable, {len(ready)} baselined) "
           f"| {logged} logged | {dropped} pruned | {alerts} alert(s)")
