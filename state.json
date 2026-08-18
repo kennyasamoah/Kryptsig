@@ -161,10 +161,11 @@
    "baseline_ts": "2026-08-18T03:28:51+00:00",
    "buyer_hist": [
     65,
-    72
+    72,
+    49
    ],
    "last_candles": 168,
-   "last_liq": 331925.788,
+   "last_liq": 334918.0916,
    "last_try": "2026-08-18T03:28:51+00:00",
    "name": "MANLET / SOL",
    "tries": 1
