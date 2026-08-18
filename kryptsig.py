@@ -287,34 +287,59 @@ def audit(address):
     # ---- authorities ------------------------------------------------------
     print("\n[2] authorities")
     tok = dig(rep, "token", default={}) or {}
-    for label, keys in (("mint authority", ("mintAuthority",)),
-                        ("freeze authority", ("freezeAuthority",))):
-        v = dig(tok, *keys)
-        if v in (None, "", "null"):
+    # These live at the TOP level of the report, not inside `token`.
+    # Reading the wrong place returned None and printed "revoked" -- a
+    # false pass. Check both, and say so when neither reports.
+    for label, key in (("mint authority", "mintAuthority"),
+                       ("freeze authority", "freezeAuthority")):
+        present = key in rep or key in tok
+        v = rep.get(key, tok.get(key))
+        if not present:
+            print(f"  ?     {label:<20} NOT REPORTED -- cannot verify")
+            unknown.append(label)
+        elif v in (None, "", "null"):
             print(f"  ok    {label:<20} revoked")
         else:
-            print(f"  FAIL  {label:<20} ACTIVE ({str(v)[:20]})")
+            print(f"  FAIL  {label:<20} ACTIVE ({str(v)[:24]})")
             fails.append(label + " active")
 
     # ---- LP lock ----------------------------------------------------------
     print("\n[3] liquidity lock")
     markets = dig(rep, "markets", default=[]) or []
-    best = None
-    for m in markets:
+    lowest = None
+    for i, m in enumerate(markets):
         lp = dig(m, "lp", default={}) or {}
         locked = as_pct(dig(lp, "lpLockedPct", "lpLockedPercentage"))
-        if locked is not None and (best is None or locked > best):
-            best = locked
-    if best is None:
-        print("  ?     lp locked %        not reported")
+        usd = dig(lp, "lpLockedUSD", "lpLockedUsd")
+        label = f"market {i+1}"
+        if locked is None:
+            print(f"  ?     {label:<20} lp lock not reported")
+        else:
+            print(f"        {label:<20} {locked*100:.1f}% locked"
+                  + (f", ${usd:,.0f}" if isinstance(usd, (int, float)) else ""))
+            # Use the WORST market, not the best. A token can have one clean
+            # pool and another with withdrawable liquidity; your exit routes
+            # through whichever is deepest, and that may be the unlocked one.
+            lowest = locked if lowest is None else min(lowest, locked)
+        if i == 0 and lp:
+            print(f"        lp fields: {', '.join(sorted(lp)[:10])}")
+
+    lockers = dig(rep, "lockers", default={}) or {}
+    if lockers:
+        print(f"        lockers reported: {len(lockers)}")
+
+    if lowest is None:
+        print("  ?     lp locked            not reported")
         unknown.append("LP lock")
     else:
-        bad = best < MIN_LP_LOCKED
-        print(f"  {'FAIL' if bad else 'ok  '}  {'lp locked':<20} {best*100:.1f}%"
-              f"   (need {MIN_LP_LOCKED*100:.0f}%)")
+        bad = lowest < MIN_LP_LOCKED
+        print(f"  {'FAIL' if bad else 'ok  '}  {'worst market lock':<20} "
+              f"{lowest*100:.1f}%   (need {MIN_LP_LOCKED*100:.0f}%)")
         if bad:
-            fails.append(f"LP only {best*100:.0f}% locked -- "
-                         f"{100-best*100:.0f}% is withdrawable")
+            fails.append(f"LP only {lowest*100:.0f}% locked -- "
+                         f"{100-lowest*100:.0f}% withdrawable")
+        print("        NOTE: compare this against the LP figure on")
+        print("        rugcheck.xyz. If they disagree, trust the lower one.")
 
     # ---- distribution -----------------------------------------------------
     print("\n[4] distribution")
@@ -339,13 +364,25 @@ def audit(address):
 
     top = dig(rep, "topHolders", "top_holders", default=[]) or []
     if top:
-        pcts = [as_pct(dig(h, "pct", "percentage")) or 0 for h in top[:10]]
-        top10 = sum(pcts)
+        # Per-item normalisation was the bug: a list like [12.3, 0.9, 0.8]
+        # had 12.3 divided by 100 while 0.9 was left alone, producing 300%.
+        # Decide the scale ONCE from the whole list.
+        raw = [dig(h, "pct", "percentage") for h in top[:10]]
+        raw = [r for r in raw if isinstance(r, (int, float))]
+        total = sum(raw)
+        top10 = total / 100.0 if total > 1.5 else total
         bad = top10 > MAX_TOP10
         print(f"  {'FAIL' if bad else 'ok  '}  {'top 10 holders':<20} "
               f"{top10*100:.1f}%   (max {MAX_TOP10*100:.0f}%)")
         if bad:
             fails.append("top-10 concentration")
+        nets = dig(rep, "insiderNetworks", default=[]) or []
+        if nets:
+            print(f"  WARN  {'insider networks':<20} {len(nets)} detected")
+            warns.append(f"{len(nets)} insider network(s) -- linked wallets")
+        if dig(rep, "graphInsidersDetected"):
+            print(f"        graphInsidersDetected: "
+                  f"{dig(rep, 'graphInsidersDetected')}")
         insiders = [h for h in top if dig(h, "insider") is True]
         if insiders:
             print(f"  WARN  {'insider wallets':<20} {len(insiders)} of "
@@ -376,7 +413,9 @@ def audit(address):
     extra = [k for k in rep if k not in
              ("score", "score_normalised", "rugged", "risks", "token",
               "markets", "totalHolders", "total_holders", "creatorBalance",
-              "creatorBalancePct", "topHolders", "top_holders")]
+              "creatorBalancePct", "topHolders", "top_holders",
+              "mintAuthority", "freezeAuthority", "insiderNetworks",
+              "graphInsidersDetected", "lockers", "lockerOwners")]
     if extra:
         print(f"\nunmapped response fields: {', '.join(sorted(extra)[:16])}")
     print()
