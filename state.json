@@ -16,9 +16,11 @@
    "buyer_hist": [
     1103,
     490,
-    502
+    502,
+    549
    ],
    "last_candles": 10,
+   "last_liq": 104701.4802,
    "name": "Z500 / SOL",
    "tries": 1
   },
