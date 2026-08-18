@@ -1008,8 +1008,22 @@ def selftest():
     else:
         bad("multi endpoint", "polling would return nothing every run")
 
-    # 7 -- notification delivery
-    print("\n[7] notification")
+    # 7 -- golden test. I computed LP lock four different ways and got
+    # 100%, 0%, 84.6%, 142.1% and 71%. One of those flipped a rejection into
+    # a pass. This pins a known-bad token so that can never happen silently.
+    print("\n[7] golden test (known-bad token)")
+    GOLDEN = "zj1jpp7QMveWHLs61vL9KMZf254KvW7j4AAmBF8ry2k"
+    gv, gdetail, gwhy = audit_summary(GOLDEN)
+    if gv == "unknown":
+        warn("golden test", f"rugcheck unreachable -- {gdetail}")
+    elif gv == "block":
+        ok("golden test", f"correctly blocked: {'; '.join(gwhy)[:60]}")
+    else:
+        bad("golden test",
+            f"known-bad token returned '{gv}' -- LP gate is broken. {gdetail}")
+
+    # 8 -- notification delivery
+    print("\n[8] notification")
     if os.environ.get("NTFY_TOPIC"):
         notify("Kryptsig selftest", "Selftest reached your device. Pipe works.")
         ok("ntfy publish sent", "check your phone")
