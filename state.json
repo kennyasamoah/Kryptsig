@@ -4,9 +4,9 @@
  "hot_list": [
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
   "3fFrA4HdKe4UU8wWG2DouMxSJoZ9JxxBW3RmRHhp6EUi",
-  "EFHinHjxNnZgmMv1ctZmCKqX8LHTPVzxwFXX9zQtnEB4",
+  "CD5HDt23sjGud5VTWsv51BMPey2Qf9qH5cyswWmjBDdq",
   "GwTzkbi3ogqYSphVeSMGaBwdkBvEzBo87dmDWyCxd1aj",
-  "CD5HDt23sjGud5VTWsv51BMPey2Qf9qH5cyswWmjBDdq"
+  "EFHinHjxNnZgmMv1ctZmCKqX8LHTPVzxwFXX9zQtnEB4"
  ],
  "last_alert": {},
  "last_full_scan": 1787041075.0707688,
@@ -43,10 +43,11 @@
     575,
     646,
     683,
-    678
+    678,
+    684
    ],
    "last_candles": 7,
-   "last_liq": 38813.9408,
+   "last_liq": 34161.6956,
    "last_try": "2026-08-18T05:47:12+00:00",
    "name": "OPENAI / SOL",
    "tries": 1
@@ -214,10 +215,11 @@
    "baseline_ts": "2026-08-18T08:18:00+00:00",
    "buyer_hist": [
     141,
-    67
+    67,
+    74
    ],
    "last_candles": 168,
-   "last_liq": 166069.0035,
+   "last_liq": 165621.9664,
    "last_try": "2026-08-18T08:18:00+00:00",
    "name": "LAYOOO / SOL",
    "tries": 1
@@ -246,10 +248,11 @@
     678,
     415,
     318,
-    177
+    177,
+    434
    ],
    "last_candles": 10,
-   "last_liq": 110203.188,
+   "last_liq": 120727.4957,
    "last_try": "2026-08-18T03:28:53+00:00",
    "name": "BULLSHIT / SOL",
    "tries": 1
@@ -332,10 +335,11 @@
    "buyer_hist": [
     568,
     270,
-    93
+    93,
+    99
    ],
    "last_candles": 27,
-   "last_liq": 72984.6648,
+   "last_liq": 78556.6609,
    "last_try": "2026-08-18T05:47:17+00:00",
    "name": "BILLY / SOL",
    "tries": 1
