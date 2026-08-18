@@ -3,8 +3,6 @@
  "alerts_today": 0,
  "hot_list": [
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
-  "68C62WPYiiNZxprbuaMj2ULXpiTDKcs5xsX7kBGnyajR",
-  "HZp4qwbMUCdwj6ATZCpUZCKeAhBZmWSwj7kLMgYA6Ztg",
   "5Jm4GnWPt62kphmhEET6rjzzFjvsfNxNqdpEuGwp2U9q"
  ],
  "last_alert": {},
@@ -80,10 +78,11 @@
     634,
     499,
     660,
-    1618
+    1618,
+    1578
    ],
    "last_candles": 9,
-   "last_liq": 254134.1492,
+   "last_liq": 241374.1603,
    "name": "EYE / SOL",
    "tries": 1
   },
@@ -140,10 +139,11 @@
     167,
     110,
     77,
-    64
+    64,
+    71
    ],
    "last_candles": 168,
-   "last_liq": 279462.6153,
+   "last_liq": 275720.9004,
    "last_try": "2026-08-18T03:28:51+00:00",
    "name": "MANLET / SOL",
    "tries": 1
@@ -214,10 +214,11 @@
     148,
     206,
     522,
-    163
+    163,
+    154
    ],
    "last_candles": 168,
-   "last_liq": 150473.8448,
+   "last_liq": 151736.9171,
    "last_try": "2026-08-18T08:18:00+00:00",
    "name": "LAYOOO / SOL",
    "tries": 1
@@ -374,10 +375,11 @@
     16,
     67,
     53,
-    289
+    289,
+    271
    ],
    "last_candles": 13,
-   "last_liq": 398043.7238,
+   "last_liq": 414225.1631,
    "last_try": "2026-08-18T03:28:58+00:00",
    "name": "EYE / SOL",
    "tries": 1
