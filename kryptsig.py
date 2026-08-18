@@ -812,7 +812,19 @@ def backfill(addr):
     vols = [num(r[5]) for r in rows if len(r) >= 6]
     if len(vols) < MIN_BASELINE_OBS:
         return None, len(vols)
-    return statistics.median(vols), len(vols)
+    # The median includes the token's own bursts. A name that already ran
+    # once gets an unreachable bar -- GTA6 came back at $1,273,980/hr on a
+    # $61k pool, meaning it would need $3.8M in an hour to trigger. But a
+    # baseline is supposed to represent QUIET, not average. Use the 30th
+    # percentile: it anchors to the calm hours and is barely moved by spikes.
+    vols.sort()
+    idx = max(0, int(len(vols) * 0.30) - 1)
+    quiet = vols[idx]
+    # Guard against a floor of zero on tokens with dead hours.
+    if quiet <= 0:
+        nonzero = [v for v in vols if v > 0]
+        quiet = nonzero[max(0, int(len(nonzero) * 0.30) - 1)] if nonzero else 0
+    return quiet, len(vols)
 
 
 def update_buyer_baseline(entry, buyers_now):
