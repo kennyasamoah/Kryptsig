@@ -1149,6 +1149,10 @@ def too_young_for_baseline(entry):
 
 
 def backfill_priority(entry):
+    # Refresh a wrong baseline before computing a missing one: the pool is
+    # already liquid and alertable, and its current threshold is unreachable.
+    if entry.get("baseline") and entry.get("algo") != BASELINE_ALGO:
+        return (-1, 0)
     """Lower sorts first. Pools that returned candles are close to a
     baseline; pools that returned NOTHING have no trading at all and should
     not keep jumping the queue ahead of them."""
@@ -1665,7 +1669,7 @@ def main():
         print("-" * 78)
         for r in rows:
             print(f"{r[0]:<28} {r[1]:<5} {r[2]:<12} {r[3]:>4} {r[4]:>3} "
-                  f"{r[6]:<5} {r[5]:<12}")
+                  f"{r[5]:<5} {r[6]:<12}")
         ready = sum(1 for r in rows if r[1] == "yes")
         print("-" * 78)
         print(f"{ready} baselined (can alert), {len(rows)-ready} still warming up")
@@ -1677,8 +1681,8 @@ def main():
         print("            audit and rugcheck.xyz both need the MINT)")
         for r in rows:
             print(f"  {r[0]}")
-            print(f"    pool  {r[6]}")
-            print(f"    mint  {r[7] or '(not seen yet -- poll again)'}")
+            print(f"    pool  {r[7]}")
+            print(f"    mint  {r[8] or '(not seen yet -- poll again)'}")
         return
 
     if "--audit" in sys.argv:
