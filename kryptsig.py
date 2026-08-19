@@ -188,6 +188,18 @@ RC_MIN_LOCK_NOTE = ("RugCheck publishes LP Locked % on its token page. "
 # sufficient permissions"), so it cannot do this job. RugCheck's report
 # endpoint carries LP lock status, insider networks, and holder distribution
 # -- the three things no price API exposes.
+# --------------------------------------------------------------- Bitquery
+# Bonding-curve progress. Optional: without BITQUERY_TOKEN everything else
+# works unchanged. Curve VELOCITY is the signal -- a curve that fills in 20
+# minutes was filled by a few coordinated wallets; one that fills over hours
+# was filled by people finding it independently. Liquidity is a level and
+# cannot tell those apart.
+BQ_URL     = "https://streaming.bitquery.io/eap"
+BQ_TOKEN   = os.environ.get("BITQUERY_TOKEN", "").strip()
+PUMP_PROG  = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
+FAST_FILL_PCT_PER_HR = 120.0   # >100%/hr implies a sub-hour fill: coordinated
+SLOW_FILL_PCT_PER_HR = 3.0     # below this it is stalling, not accumulating
+
 RC      = "https://api.rugcheck.xyz/v1"
 RC_KEY  = os.environ.get("RUGCHECK_API_KEY", "").strip()   # optional
 
@@ -279,6 +291,76 @@ def notify(title, body):
         urllib.request.urlopen(req, timeout=10)
     except Exception as e:
         print(f"  ! notify: {e}")
+
+
+def bq_curve(mint):
+    """Bonding-curve progress for one pump.fun mint.
+    Returns (percent, error). Percent is 0-100; 100 means graduated."""
+    if not BQ_TOKEN:
+        return None, "BITQUERY_TOKEN not set"
+    q = {
+        "query": """
+        query($mint: String!, $prog: String!) {
+          Solana {
+            DEXPools(
+              limit: {count: 1}
+              orderBy: {descending: Block_Slot}
+              where: {Pool: {Market: {BaseCurrency: {MintAddress: {is: $mint}}},
+                             Dex: {ProgramAddress: {is: $prog}}}}
+            ) {
+              progress: calculate(
+                expression: "100 - ((($Pool_Base_Balance - 206900000) * 100) / 793100000)")
+              Pool { Base { PostAmount } Quote { PostAmountInUSD } }
+            }
+          }
+        }""",
+        "variables": {"mint": mint, "prog": PUMP_PROG},
+    }
+    req = urllib.request.Request(
+        BQ_URL, data=json.dumps(q).encode(),
+        headers={"Content-Type": "application/json",
+                 "Authorization": f"Bearer {BQ_TOKEN}"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=25) as r:
+            payload = json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        body = ""
+        try:
+            body = e.read().decode()[:180]
+        except Exception:
+            pass
+        if e.code in (401, 403):
+            return None, f"HTTP {e.code} -- token invalid or trial expired. {body}"
+        return None, f"HTTP {e.code} {body}"
+    except Exception as e:
+        return None, str(e)
+
+    if payload.get("errors"):
+        return None, f"graphql error: {str(payload['errors'])[:160]}"
+    try:
+        pools = payload["data"]["Solana"]["DEXPools"]
+    except (TypeError, KeyError):
+        return None, f"unexpected shape: {str(payload)[:160]}"
+    if not pools:
+        return None, "no pump.fun pool -- already graduated or not a pump token"
+    val = pools[0].get("progress")
+    try:
+        return max(0.0, min(100.0, float(val))), None
+    except (TypeError, ValueError):
+        return None, f"progress not numeric: {val!r}"
+
+
+def classify_fill(pct_per_hour):
+    """Turn velocity into the read that matters."""
+    if pct_per_hour is None:
+        return "unknown", ""
+    if pct_per_hour > FAST_FILL_PCT_PER_HR:
+        return "coordinated", ("filling in under an hour -- a few wallets, not "
+                               "a crowd. They exit into graduation.")
+    if pct_per_hour < SLOW_FILL_PCT_PER_HR:
+        return "stalling", "barely moving -- most curves die here"
+    return "organic", "hours to fill -- consistent with independent buyers"
 
 
 def rc_get(path):
@@ -1302,6 +1384,48 @@ def selftest():
 
 # ----------------------------------------------------------------------
 def main():
+    if "--curve" in sys.argv:
+        i = sys.argv.index("--curve")
+        if i + 1 >= len(sys.argv):
+            print("usage: kryptsig.py --curve <token_mint>")
+            return
+        mint = sys.argv[i + 1]
+        print(f"\nBonding curve -- {mint}\n" + "=" * 58)
+        pct, err = bq_curve(mint)
+        if err:
+            print(f"  UNAVAILABLE  {err}")
+            return
+        print(f"  curve progress   {pct:.1f}%")
+
+        # Velocity needs two readings. Store the first, compare on the second.
+        st = load_json(STATE_FILE, {})
+        hist = st.setdefault("curve_hist", {})
+        prev = hist.get(mint)
+        now = time.time()
+        if prev:
+            dt_h = (now - prev["ts"]) / 3600
+            if dt_h > 0.02:
+                vel = (pct - prev["pct"]) / dt_h
+                kind, note = classify_fill(vel)
+                print(f"  previous         {prev['pct']:.1f}% "
+                      f"({dt_h:.2f}h ago)")
+                print(f"  velocity         {vel:+.1f}%/hr")
+                print(f"  read             {kind.upper()} -- {note}")
+                if vel > 0 and pct < 100:
+                    eta = (100 - pct) / vel
+                    print(f"  projected fill   {eta:.1f}h to graduation")
+            else:
+                print("  (too soon since last reading for a velocity)")
+        else:
+            print("  no prior reading -- run again in 15+ minutes for velocity")
+        hist[mint] = {"pct": pct, "ts": now}
+        st["curve_hist"] = {k: v for k, v in hist.items()
+                            if now - v["ts"] < 86400}   # keep 24h
+        with open(STATE_FILE, "w") as fh:
+            json.dump(st, fh, indent=1, sort_keys=True)
+        print()
+        return
+
     if "--log" in sys.argv:
         # Append or update one journal row. Keyed by address so repeat calls
         # for the same token update in place rather than duplicating.
