@@ -48,7 +48,13 @@ MAX_POOL_PCT     = 0.02          # never exceed 2% of pool -- above that your
 # the pond -- including the small pools where nobody else is looking yet.
 MIN_LIQ_ABS      = 5_000
 MIN_POSITION_USD = 95      # below this, fees exceed 2% -- do not bother
-MIN_AGE_HOURS    = 6             # was 14 days. Target is now accumulation,
+# Was 6h, because a baseline needed 6 HOURLY candles. Four deeply liquid
+# tokens (VIRUS $168k, SPCX $399k, MOONCOIN $98k, Monkey $81k) were all
+# blocked at 2.4h old by that alone. Young pools now use 15-minute candles,
+# so 2 hours of history is 8 observations -- a real baseline, 4h sooner.
+MIN_AGE_HOURS    = 2
+YOUNG_HOURS      = 12        # below this age, baseline from 15-min candles
+MIN_BASELINE_15M = 8         # 8 x 15min = 2 hours             # was 14 days. Target is now accumulation,
                                  # not dormancy break -- but we still need
                                  # enough candles for a baseline.
 MAX_MCAP         = 20_000_000    # tightened: asymmetry, not safety
@@ -124,7 +130,11 @@ HOT_MAX          = 30      # one multi call
 COOLDOWN_HOURS     = 4
 BASELINE_HOURS     = 168         # up to 7 days of hourly candles
 MIN_BASELINE_OBS   = 6           # young tokens have short histories
-BASELINE_MAX_AGE_H = 168         # refresh weekly (BUG 2)
+BASELINE_MAX_AGE_H = 168         # refresh weekly
+# Bump when the baseline algorithm changes. Stored baselines computed by an
+# older method are otherwise frozen for a week -- EYE sat at $2.17M/hr from
+# the old median-of-hourly method, needing $6.5M in an hour to ever fire.
+BASELINE_ALGO      = 3           # 1=median/hourly 2=p30/hourly 3=p30+15min (BUG 2)
 BACKFILL_BUDGET    = 5   # ceiling; the real figure is computed per run from
                          # remaining call headroom so the pond size cannot
                          # silently push monthly usage over budget
@@ -821,6 +831,7 @@ def discover(state):
                                         "baseline_ts": None, "tries": 0,
                                         "added": now_iso(), "src": src,
                                         "last_liq": m["liquidity"],
+                                        "last_age_h": m["age_days"] * 24,
                                         "mint": extract_mint(pool)}
                 added += 1
                 print(f"  + {m['name'][:28]:<28} ${m['liquidity']:>9,.0f} liq"
@@ -869,29 +880,44 @@ def prune(state, seen):
     return dropped
 
 
-def backfill(addr):
-    """Volume baseline from OHLCV candles."""
-    data = get(f"/networks/{NET}/pools/{addr}/ohlcv/hour",
-               f"?limit={BASELINE_HOURS}&currency=usd")
+def backfill(addr, age_hours=None):
+    """Volume baseline from OHLCV candles.
+
+    Young pools have no hourly history, so use 15-minute candles and scale
+    the result to an hourly equivalent. Callers and evaluate() then need no
+    knowledge of which timeframe was used -- the stored baseline always
+    means 'normal volume per hour'."""
+    young = age_hours is not None and age_hours < YOUNG_HOURS
+    if young:
+        data = get(f"/networks/{NET}/pools/{addr}/ohlcv/minute",
+                   f"?aggregate=15&limit=96&currency=usd")
+    else:
+        data = get(f"/networks/{NET}/pools/{addr}/ohlcv/hour",
+                   f"?limit={BASELINE_HOURS}&currency=usd")
     try:
         rows = data["data"]["attributes"]["ohlcv_list"]
     except (TypeError, KeyError):
         return None, 0
     vols = [num(r[5]) for r in rows if len(r) >= 6]
-    if len(vols) < MIN_BASELINE_OBS:
-        return None, len(vols)
     # The median includes the token's own bursts. A name that already ran
     # once gets an unreachable bar -- GTA6 came back at $1,273,980/hr on a
     # $61k pool, meaning it would need $3.8M in an hour to trigger. But a
     # baseline is supposed to represent QUIET, not average. Use the 30th
     # percentile: it anchors to the calm hours and is barely moved by spikes.
+    need = MIN_BASELINE_15M if young else MIN_BASELINE_OBS
+    if len(vols) < need:
+        return None, len(vols)
     vols.sort()
     idx = max(0, int(len(vols) * 0.30) - 1)
     quiet = vols[idx]
+    if young:
+        quiet *= 4          # 15-min -> hourly equivalent
     # Guard against a floor of zero on tokens with dead hours.
     if quiet <= 0:
         nonzero = [v for v in vols if v > 0]
         quiet = nonzero[max(0, int(len(nonzero) * 0.30) - 1)] if nonzero else 0
+        if young:
+            quiet *= 4
     return quiet, len(vols)
 
 
@@ -930,6 +956,9 @@ def backfill_priority(entry):
 
 
 def needs_baseline(entry):
+    # An outdated algorithm makes a stored baseline meaningless, not stale.
+    if entry.get("baseline") and entry.get("algo") != BASELINE_ALGO:
+        return True
     """None, or older than a week (BUG 2), and not exhausted (BUG 3)."""
     if entry.get("tries", 0) >= MAX_BACKFILL_TRIES and not entry.get("baseline"):
         return False
@@ -1339,6 +1368,8 @@ def main():
                 f"${v['baseline']:,.0f}/hr" if v.get("baseline") else "-",
                 v.get("last_candles", 0),
                 v.get("attempts", 0),
+                ("stale" if (v.get("baseline") and
+                             v.get("algo") != BASELINE_ALGO) else ""),
                 (v.get("added") or "")[5:16].replace("T", " "),
                 addr,
                 v.get("mint", ""),
@@ -1346,10 +1377,11 @@ def main():
         rows.sort(key=lambda r: (r[1] != "yes", r[0]))
         print(f"\nPond: {len(rows)} pools tracked\n" + "=" * 78)
         print(f"{'name':<28} {'base':<5} {'baseline':<12} {'cdl':>4} "
-              f"{'att':>3}  {'added':<12}")
+              f"{'att':>3} {'algo':<5} {'added':<12}")
         print("-" * 78)
         for r in rows:
-            print(f"{r[0]:<28} {r[1]:<5} {r[2]:<12} {r[3]:>4} {r[4]:>3}  {r[5]:<12}")
+            print(f"{r[0]:<28} {r[1]:<5} {r[2]:<12} {r[3]:>4} {r[4]:>3} "
+                  f"{r[6]:<5} {r[5]:<12}")
         ready = sum(1 for r in rows if r[1] == "yes")
         print("-" * 78)
         print(f"{ready} baselined (can alert), {len(rows)-ready} still warming up")
@@ -1476,7 +1508,11 @@ def main():
             print(f"  backfill budget this run: {budget} "
                   f"({len(pending)} pending)")
         for addr in pending[:budget]:
-            base, n = backfill(addr)
+            age_h = None
+            la = state["pools"][addr].get("last_age_h")
+            if isinstance(la, (int, float)):
+                age_h = la
+            base, n = backfill(addr, age_h)
             e = state["pools"][addr]
             e["attempts"] = e.get("attempts", 0) + 1   # always increments
             e["last_candles"] = n
@@ -1487,6 +1523,7 @@ def main():
                 e["tries"] = e.get("tries", 0) + 1
             if base:
                 e["baseline"], e["baseline_ts"] = base, now_iso()
+                e["algo"] = BASELINE_ALGO
             print(f"  baseline {e['name'][:22]:<22} {n} candles  ${base or 0:,.0f}/hr")
         if pending:
             print()
@@ -1523,6 +1560,7 @@ def main():
             liq_seen[addr] = m
             entry = state["pools"].setdefault(addr, {"name": m["name"]})
             entry["last_liq"] = m["liquidity"]   # after entry exists
+            entry["last_age_h"] = m["age_days"] * 24
             if m.get("mint"):
                 entry["mint"] = m["mint"]
             baseline = entry.get("baseline")
