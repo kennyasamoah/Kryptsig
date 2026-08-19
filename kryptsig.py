@@ -380,6 +380,7 @@ def bq_graduating(lo_pct=70.0, hi_pct=99.5, limit=40):
             ) {
               progress: calculate(
                 expression: "100 - ((($Pool_Base_PostAmount - 206900000) * 100) / 793100000)")
+              Block { Time }
               Pool {
                 Base { PostAmount }
                 Quote { PostAmountInUSD }
@@ -439,9 +440,39 @@ def bq_graduating(lo_pct=70.0, hi_pct=99.5, limit=40):
             "mint": bc.get("MintAddress", ""),
             "symbol": bc.get("Symbol") or bc.get("Name") or "?",
             "quote_usd": num((pool.get("Quote") or {}).get("PostAmountInUSD")),
+            "ts": (r_.get("Block") or {}).get("Time", ""),
         })
-    out.sort(key=lambda x: -x["progress"])
-    return out, None
+
+    # Collapse to one row per mint. The duplicates are consecutive trade
+    # snapshots, so their spread over time IS the fill velocity -- one query
+    # instead of two runs 15 minutes apart.
+    by_mint = {}
+    for r_ in out:
+        by_mint.setdefault(r_["mint"], []).append(r_)
+
+    tokens = []
+    for mint, rows_ in by_mint.items():
+        rows_.sort(key=lambda x: x["ts"])
+        newest, oldest = rows_[-1], rows_[0]
+        vel = None
+        try:
+            t1 = datetime.fromisoformat(newest["ts"].replace("Z", "+00:00"))
+            t0 = datetime.fromisoformat(oldest["ts"].replace("Z", "+00:00"))
+            dt_h = (t1 - t0).total_seconds() / 3600
+            if dt_h > 0.01:
+                vel = (newest["progress"] - oldest["progress"]) / dt_h
+        except (ValueError, AttributeError):
+            pass
+        tokens.append({
+            "mint": mint,
+            "symbol": newest["symbol"],
+            "progress": newest["progress"],
+            "quote_usd": newest["quote_usd"],
+            "velocity": vel,
+            "samples": len(rows_),
+        })
+    tokens.sort(key=lambda x: -x["progress"])
+    return tokens, None
 
 
 def classify_fill(pct_per_hour):
@@ -1490,16 +1521,26 @@ def main():
         if not rows:
             print("  none in this band right now -- try widening it")
             return
-        print(f"{'progress':>9}  {'pooled':>10}  {'symbol':<14}  mint")
-        print("-" * 72)
+        print(f"{'prog':>6} {'vel/hr':>9} {'read':<12} {'pooled':>9} "
+              f"{'n':>3}  {'symbol':<12}  mint")
+        print("-" * 100)
         for r_ in rows:
-            print(f"{r_['progress']:>8.1f}%  ${r_['quote_usd']:>9,.0f}  "
-                  f"{str(r_['symbol'])[:14]:<14}  {r_['mint']}")
-        print("-" * 72)
-        print(f"{len(rows)} token(s). Run --curve <mint> twice, 15+ min apart,")
-        print("for fill velocity. THIS IS ONE QUERY -- check your Bitquery")
-        print("dashboard afterwards to see what it cost in points, before")
-        print("considering anything automated.")
+            vel = r_["velocity"]
+            kind, _ = classify_fill(vel)
+            vtxt = f"{vel:+.1f}%" if vel is not None else "  --"
+            print(f"{r_['progress']:>5.1f}% {vtxt:>9} {kind:<12} "
+                  f"${r_['quote_usd']:>8,.0f} {r_['samples']:>3}  "
+                  f"{str(r_['symbol'])[:12]:<12}  {r_['mint']}")
+        print("-" * 100)
+        print(f"{len(rows)} unique token(s).")
+        print()
+        print("  ORGANIC     hours to fill -- independent buyers")
+        print("  COORDINATED sub-hour fill -- a few wallets; they exit at graduation")
+        print("  STALLING    barely moving -- most curves die here")
+        print("  vel needs 2+ samples (n); '--' means only one snapshot in range")
+        print()
+        print("  ONE query. Check your Bitquery dashboard for the point cost")
+        print("  before considering anything automated.")
         print()
         return
 
