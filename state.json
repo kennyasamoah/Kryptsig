@@ -2,12 +2,10 @@
  "alert_day": "2026-08-19",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 145,
+ "credits_used": 146,
  "hot_list": [
   "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5",
-  "HZp4qwbMUCdwj6ATZCpUZCKeAhBZmWSwj7kLMgYA6Ztg",
-  "2C7PaLGC7wtQZWR9wa7QT2bthqTDyzcBL6BEYFGdSA5e",
-  "5Jm4GnWPt62kphmhEET6rjzzFjvsfNxNqdpEuGwp2U9q"
+  "2C7PaLGC7wtQZWR9wa7QT2bthqTDyzcBL6BEYFGdSA5e"
  ],
  "last_alert": {},
  "last_full_scan": 1787134262.4967031,
@@ -38,10 +36,11 @@
     20,
     20,
     7,
-    3
+    3,
+    14
    ],
    "last_candles": 168,
-   "last_liq": 3963051.9147,
+   "last_liq": 3997811.8711,
    "last_try": "2026-08-18T20:00:14+00:00",
    "mint": "MUxEsUKSMACyw5fZf68wxf5FLnZVhtU9CwH8uNNGay1",
    "name": "MU / USDC",
@@ -86,10 +85,11 @@
     211,
     162,
     138,
-    130
+    130,
+    218
    ],
    "last_candles": 27,
-   "last_liq": 70931.5498,
+   "last_liq": 72331.0205,
    "last_try": "2026-08-18T18:58:33+00:00",
    "mint": "7fDdLy2rmQKsPCkqUXEd1mN7yDfEzArc4VrctWmfkJBK",
    "name": "Z500 / SOL",
@@ -484,10 +484,11 @@
     92,
     105,
     122,
-    121
+    121,
+    109
    ],
    "last_candles": 9,
-   "last_liq": 193922.8989,
+   "last_liq": 188081.9833,
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
    "tries": 1
@@ -1908,10 +1909,11 @@
     21,
     23,
     9,
-    43
+    43,
+    37
    ],
    "last_candles": 13,
-   "last_liq": 396169.6025,
+   "last_liq": 392219.2039,
    "last_try": "2026-08-18T03:28:58+00:00",
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
