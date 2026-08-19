@@ -2,14 +2,10 @@
  "alert_day": "2026-08-19",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 134,
+ "credits_used": 135,
  "hot_list": [
   "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5",
-  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
-  "3vzCDcWV1gWExDYtd2YGtoAD1wvMNv9ceiGzFs7ZrnpM",
-  "CD5HDt23sjGud5VTWsv51BMPey2Qf9qH5cyswWmjBDdq",
-  "HZp4qwbMUCdwj6ATZCpUZCKeAhBZmWSwj7kLMgYA6Ztg",
-  "5Jm4GnWPt62kphmhEET6rjzzFjvsfNxNqdpEuGwp2U9q"
+  "HZp4qwbMUCdwj6ATZCpUZCKeAhBZmWSwj7kLMgYA6Ztg"
  ],
  "last_alert": {},
  "last_full_scan": 1787129315.2712553,
@@ -38,10 +34,11 @@
     12,
     19,
     20,
-    20
+    20,
+    7
    ],
    "last_candles": 168,
-   "last_liq": 4055182.4467,
+   "last_liq": 4027983.5763,
    "last_try": "2026-08-18T20:00:14+00:00",
    "mint": "MUxEsUKSMACyw5fZf68wxf5FLnZVhtU9CwH8uNNGay1",
    "name": "MU / USDC",
@@ -276,10 +273,11 @@
     182,
     76,
     77,
-    44
+    44,
+    32
    ],
    "last_candles": 31,
-   "last_liq": 181681.7376,
+   "last_liq": 198359.5124,
    "last_try": "2026-08-19T01:54:51+00:00",
    "mint": "zj1jpp7QMveWHLs61vL9KMZf254KvW7j4AAmBF8ry2k",
    "name": "BULLSHIT / SOL",
@@ -467,10 +465,11 @@
     141,
     158,
     92,
-    105
+    105,
+    122
    ],
    "last_candles": 9,
-   "last_liq": 187346.1196,
+   "last_liq": 186299.6343,
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
    "tries": 1
@@ -954,10 +953,11 @@
     78,
     52,
     40,
-    48
+    48,
+    47
    ],
    "last_candles": 168,
-   "last_liq": 144381.0956,
+   "last_liq": 144082.1438,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
@@ -1206,10 +1206,11 @@
     1446,
     316,
     328,
-    284
+    284,
+    232
    ],
    "last_candles": 10,
-   "last_liq": 149592.5662,
+   "last_liq": 134602.1584,
    "last_try": "2026-08-18T03:28:53+00:00",
    "mint": "zj1jpp7QMveWHLs61vL9KMZf254KvW7j4AAmBF8ry2k",
    "name": "BULLSHIT / SOL",
@@ -1859,10 +1860,11 @@
     67,
     38,
     21,
-    23
+    23,
+    9
    ],
    "last_candles": 13,
-   "last_liq": 391472.8099,
+   "last_liq": 389325.728,
    "last_try": "2026-08-18T03:28:58+00:00",
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
