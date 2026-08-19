@@ -370,7 +370,7 @@ def bq_graduating(lo_pct=70.0, hi_pct=99.5, limit=40):
     lo_bal = curve_balance_for(hi_pct)
     q = {
         "query": """
-        query($prog: String!, $lo: Float!, $hi: Float!, $lim: Int!) {
+        query($prog: String!, $lo: String!, $hi: String!, $lim: Int!) {
           Solana {
             DEXPools(
               limit: {count: $lim}
@@ -388,8 +388,9 @@ def bq_graduating(lo_pct=70.0, hi_pct=99.5, limit=40):
             }
           }
         }""",
-        "variables": {"prog": PUMP_PROG, "lo": float(lo_bal),
-                      "hi": float(hi_bal), "lim": int(limit)},
+        # Solana amounts are big integers carried as strings in this schema.
+        "variables": {"prog": PUMP_PROG, "lo": f"{lo_bal:.0f}",
+                      "hi": f"{hi_bal:.0f}", "lim": int(limit)},
     }
     req = urllib.request.Request(
         BQ_URL, data=json.dumps(q).encode(),
@@ -409,7 +410,8 @@ def bq_graduating(lo_pct=70.0, hi_pct=99.5, limit=40):
         return None, str(e)
 
     if payload.get("errors"):
-        return None, f"graphql error: {str(payload['errors'])[:200]}"
+        msgs = [e.get("message", "") for e in payload["errors"]]
+        return None, "graphql error:\n    " + "\n    ".join(msgs[:4])
     try:
         rows = payload["data"]["Solana"]["DEXPools"]
     except (TypeError, KeyError):
