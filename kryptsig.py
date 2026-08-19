@@ -197,6 +197,12 @@ RC_MIN_LOCK_NOTE = ("RugCheck publishes LP Locked % on its token page. "
 BQ_URL     = "https://streaming.bitquery.io/eap"
 BQ_TOKEN   = os.environ.get("BITQUERY_TOKEN", "").strip()
 PUMP_PROG  = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
+# Progress P maps to a base-token balance:
+#   base = 206_900_000 + (100 - P) * 7_931_000
+# so a band of P becomes a balance range we can filter on.
+def curve_balance_for(progress_pct):
+    return 206_900_000 + (100.0 - progress_pct) * 7_931_000
+
 FAST_FILL_PCT_PER_HR = 120.0   # >100%/hr implies a sub-hour fill: coordinated
 SLOW_FILL_PCT_PER_HR = 3.0     # below this it is stalling, not accumulating
 
@@ -349,6 +355,83 @@ def bq_curve(mint):
         return max(0.0, min(100.0, float(val))), None
     except (TypeError, ValueError):
         return None, f"progress not numeric: {val!r}"
+
+
+def bq_graduating(lo_pct=70.0, hi_pct=99.5, limit=40):
+    """Tokens currently sitting in a bonding-curve progress band.
+
+    This is the discovery step I said was impossible -- GeckoTerminal only
+    indexes pools that exist, but Bitquery indexes the curve itself. One
+    query returns tokens approaching graduation, which is exactly the
+    middle ground between curve and graduation."""
+    if not BQ_TOKEN:
+        return None, "BITQUERY_TOKEN not set"
+    hi_bal = curve_balance_for(lo_pct)     # lower progress = higher balance
+    lo_bal = curve_balance_for(hi_pct)
+    q = {
+        "query": """
+        query($prog: String!, $lo: Float!, $hi: Float!, $lim: Int!) {
+          Solana {
+            DEXPools(
+              limit: {count: $lim}
+              orderBy: {descending: Block_Slot}
+              where: {Pool: {Dex: {ProgramAddress: {is: $prog}},
+                             Base: {PostAmount: {gt: $lo, lt: $hi}}}}
+            ) {
+              progress: calculate(
+                expression: "100 - ((($Pool_Base_Balance - 206900000) * 100) / 793100000)")
+              Pool {
+                Base { PostAmount }
+                Quote { PostAmountInUSD }
+                Market { MarketAddress BaseCurrency { MintAddress Symbol Name } }
+              }
+            }
+          }
+        }""",
+        "variables": {"prog": PUMP_PROG, "lo": float(lo_bal),
+                      "hi": float(hi_bal), "lim": int(limit)},
+    }
+    req = urllib.request.Request(
+        BQ_URL, data=json.dumps(q).encode(),
+        headers={"Content-Type": "application/json",
+                 "Authorization": f"Bearer {BQ_TOKEN}"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            payload = json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        body = ""
+        try:
+            body = e.read().decode()[:200]
+        except Exception:
+            pass
+        return None, f"HTTP {e.code} {body}"
+    except Exception as e:
+        return None, str(e)
+
+    if payload.get("errors"):
+        return None, f"graphql error: {str(payload['errors'])[:200]}"
+    try:
+        rows = payload["data"]["Solana"]["DEXPools"]
+    except (TypeError, KeyError):
+        return None, f"unexpected shape: {str(payload)[:200]}"
+
+    out = []
+    for r_ in rows:
+        pool = r_.get("Pool") or {}
+        mkt = pool.get("Market") or {}
+        bc = mkt.get("BaseCurrency") or {}
+        try:
+            prog = float(r_.get("progress"))
+        except (TypeError, ValueError):
+            continue
+        out.append({
+            "progress": max(0.0, min(100.0, prog)),
+            "mint": bc.get("MintAddress", ""),
+            "symbol": bc.get("Symbol") or bc.get("Name") or "?",
+            "quote_usd": num((pool.get("Quote") or {}).get("PostAmountInUSD")),
+        })
+    out.sort(key=lambda x: -x["progress"])
+    return out, None
 
 
 def classify_fill(pct_per_hour):
@@ -1384,6 +1467,32 @@ def selftest():
 
 # ----------------------------------------------------------------------
 def main():
+    if "--graduating" in sys.argv:
+        i = sys.argv.index("--graduating")
+        lo = float(sys.argv[i+1]) if len(sys.argv) > i+1 else 70.0
+        hi = float(sys.argv[i+2]) if len(sys.argv) > i+2 else 99.5
+        print(f"\nPump.fun tokens between {lo:.0f}% and {hi:.0f}% "
+              f"bonding curve progress\n" + "=" * 72)
+        rows, err = bq_graduating(lo, hi)
+        if err:
+            print(f"  UNAVAILABLE  {err}")
+            return
+        if not rows:
+            print("  none in this band right now -- try widening it")
+            return
+        print(f"{'progress':>9}  {'pooled':>10}  {'symbol':<14}  mint")
+        print("-" * 72)
+        for r_ in rows:
+            print(f"{r_['progress']:>8.1f}%  ${r_['quote_usd']:>9,.0f}  "
+                  f"{str(r_['symbol'])[:14]:<14}  {r_['mint']}")
+        print("-" * 72)
+        print(f"{len(rows)} token(s). Run --curve <mint> twice, 15+ min apart,")
+        print("for fill velocity. THIS IS ONE QUERY -- check your Bitquery")
+        print("dashboard afterwards to see what it cost in points, before")
+        print("considering anything automated.")
+        print()
+        return
+
     if "--curve" in sys.argv:
         i = sys.argv.index("--curve")
         if i + 1 >= len(sys.argv):
