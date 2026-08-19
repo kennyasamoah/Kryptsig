@@ -9,7 +9,7 @@ on:
         description: "run = poll | selftest = check dependencies | audit = check one token"
         type: choice
         default: run
-        options: [run, selftest, audit, pond, log, curve]
+        options: [run, selftest, audit, pond, log, curve, graduating]
       address:
         description: "Token address (audit and log modes)"
         type: string
@@ -49,6 +49,12 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           CG_API_KEY: ${{ secrets.CG_API_KEY }}
         run: python kryptsig.py --selftest
+
+      - name: Graduating tokens
+        if: inputs.mode == 'graduating'
+        env:
+          BITQUERY_TOKEN: ${{ secrets.BITQUERY_TOKEN }}
+        run: python kryptsig.py --graduating
 
       - name: Bonding curve
         if: inputs.mode == 'curve'
