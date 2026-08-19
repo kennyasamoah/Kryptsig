@@ -9,7 +9,7 @@ on:
         description: "run = poll | selftest = check dependencies | audit = check one token"
         type: choice
         default: run
-        options: [run, selftest, audit, pond, log]
+        options: [run, selftest, audit, pond, log, curve]
       address:
         description: "Token address (audit and log modes)"
         type: string
@@ -50,6 +50,16 @@ jobs:
           CG_API_KEY: ${{ secrets.CG_API_KEY }}
         run: python kryptsig.py --selftest
 
+      - name: Bonding curve
+        if: inputs.mode == 'curve'
+        env:
+          BITQUERY_TOKEN: ${{ secrets.BITQUERY_TOKEN }}
+        run: |
+          if [ -z "${{ inputs.address }}" ]; then
+            echo "curve mode needs a token mint in address"; exit 1
+          fi
+          python kryptsig.py --curve "${{ inputs.address }}"
+
       - name: Journal entry
         if: inputs.mode == 'log'
         run: |
@@ -84,7 +94,7 @@ jobs:
         run: python kryptsig.py
 
       - name: Persist state and logs
-        if: always() && (inputs.mode == '' || inputs.mode == 'run' || inputs.mode == 'log')
+        if: always() && (inputs.mode == '' || inputs.mode == 'run' || inputs.mode == 'log' || inputs.mode == 'curve')
         run: |
           set -e
           git config user.name  "kryptsig"
