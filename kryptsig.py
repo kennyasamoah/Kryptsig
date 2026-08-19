@@ -315,7 +315,7 @@ def bq_curve(mint):
                              Dex: {ProgramAddress: {is: $prog}}}}
             ) {
               progress: calculate(
-                expression: "100 - ((($Pool_Base_Balance - 206900000) * 100) / 793100000)")
+                expression: "100 - ((($Pool_Base_PostAmount - 206900000) * 100) / 793100000)")
               Pool { Base { PostAmount } Quote { PostAmountInUSD } }
             }
           }
@@ -379,7 +379,7 @@ def bq_graduating(lo_pct=70.0, hi_pct=99.5, limit=40):
                              Base: {PostAmount: {gt: $lo, lt: $hi}}}}
             ) {
               progress: calculate(
-                expression: "100 - ((($Pool_Base_Balance - 206900000) * 100) / 793100000)")
+                expression: "100 - ((($Pool_Base_PostAmount - 206900000) * 100) / 793100000)")
               Pool {
                 Base { PostAmount }
                 Quote { PostAmountInUSD }
@@ -422,9 +422,17 @@ def bq_graduating(lo_pct=70.0, hi_pct=99.5, limit=40):
         pool = r_.get("Pool") or {}
         mkt = pool.get("Market") or {}
         bc = mkt.get("BaseCurrency") or {}
+        # Prefer the server-side calculate(), but fall back to computing it
+        # from the raw balance -- the formula is simple and this removes a
+        # dependency on their expression syntax.
+        prog = None
         try:
             prog = float(r_.get("progress"))
         except (TypeError, ValueError):
+            bal = num((pool.get("Base") or {}).get("PostAmount"))
+            if bal:
+                prog = 100.0 - ((bal - 206_900_000) * 100.0) / 793_100_000
+        if prog is None:
             continue
         out.append({
             "progress": max(0.0, min(100.0, prog)),
