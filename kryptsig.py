@@ -116,12 +116,17 @@ HEARTBEAT_HOURS    = 24        # prove the system is alive even when silent
 # The ceiling is our single biggest untested assumption. Log what it rejects
 # so the log can refute it.
 CEILING_LOG        = "rejected_late.csv"
+ADMIT_LOG          = "admitted.csv"   # one row per pool at admission
 JOURNAL_FILE       = "journal.csv"   # YOURS. Kryptsig never overwrites it.
 
 # Two-speed polling. Watching 150 sleepy pools every 15 minutes wastes the
 # budget; watching the few already stirring is cheap and cuts detection
 # latency from 60 minutes to 15 -- the difference between catching a fast
 # mover and having the ceiling reject it as TOO LATE.
+BACKLOG_PAUSE    = 40      # pending baselines above which discovery pauses.
+                           # A pool with no baseline cannot alert, so adding
+                           # more pools while 85 wait is negative progress:
+                           # it raises polling cost and shrinks backfill.
 FULL_SCAN_HOURS  = 1.0     # discovery + backfill + poll everything
 HOT_MULTIPLE     = 1.5     # volume vs baseline that earns a hot-list slot
 HOT_CHG_1H       = 2.0     # ...or this much price movement
@@ -1026,7 +1031,7 @@ def discover(state):
             addr = attrs.get("address")
             if not addr or addr in state["pools"]:
                 continue
-            m = parse_pool(attrs)
+            m = enrich(parse_pool(attrs))   # tier/turnover for the snapshot
             ok, _ = admissible(m)
             if ok:
                 # Store liquidity and mint NOW. Discovery already knows
@@ -1040,6 +1045,20 @@ def discover(state):
                                         "last_age_h": m["age_days"] * 24,
                                         "mint": extract_mint(pool)}
                 added += 1
+                # One row per pool at the moment it enters the pond. Without
+                # this, a token picked from the pond before it has a baseline
+                # leaves no record of what it looked like -- which makes
+                # "why did that one work?" unanswerable afterwards.
+                append_row(ADMIT_LOG,
+                    ["ts","pool","mint","name","src","liquidity","mcap",
+                     "age_hours","vol_1h","vol_24h","chg_1h","chg_24h",
+                     "buyers_1h","sellers_1h","turnover","tier","max_position"],
+                    [now_iso(), addr, extract_mint(pool), m["name"], src,
+                     round(m["liquidity"]), round(m["mcap"]),
+                     round(m["age_days"]*24, 1), round(m["vol_1h"]),
+                     round(m["vol_24h"]), m["chg_1h"], m["chg_24h"],
+                     m["buyers"], m["sellers"], round(m["turnover"], 4),
+                     m.get("tier", ""), round(m.get("max_pos", 0))])
                 print(f"  + {m['name'][:28]:<28} ${m['liquidity']:>9,.0f} liq"
                       f"  {m['age_days']*24:>5.1f}h  [{src}]")
 
@@ -1748,7 +1767,20 @@ def main():
         state["last_full_scan"] = time.time()
 
     fixture = load_json("fixture.json", {}).get("pools", []) if dry else []
-    if not dry and full_scan:
+
+    # Count the backlog BEFORE deciding whether to discover more.
+    backlog = sum(1 for a, v in state["pools"].items()
+                  if needs_baseline(v)
+                  and not is_equity(v.get("name"))
+                  and (v.get("last_liq") is None
+                       or v.get("last_liq") >= MIN_LIQ_ABS))
+    discovering = full_scan and backlog < BACKLOG_PAUSE
+
+    if not dry and full_scan and not discovering:
+        print(f"discovery PAUSED: {backlog} baselines pending "
+              f"(resume under {BACKLOG_PAUSE}) -- spending calls on backfill\n")
+
+    if not dry and discovering:
         added = discover(state)
         print(f"discovery: page {state.get('next_page', 1) - 1 or 8}, "
               f"+{added} (tracking {len(state['pools'])})\n")
@@ -1766,6 +1798,8 @@ def main():
         # Hourly full scans with 5 discovery calls run ~11-12 calls. Keep
         # the target at 10 so a growing pond shrinks backfill rather than
         # pushing monthly spend past the throttle.
+        # When discovery is paused it spent 0 calls instead of ~5, so the
+        # whole remainder goes to backfill.
         target = 10
         budget = max(1, min(BACKFILL_BUDGET,
                             target - CALLS["n"] - poll_calls))
