@@ -1564,15 +1564,51 @@ def main():
         if not rows:
             print("  none in this band right now -- try widening it")
             return
+        # The query returns the 40 most recent trades GLOBALLY, so all rows
+        # land within ~30 seconds -- a snapshot, not a series. Real velocity
+        # comes from comparing this run against the previous one, which costs
+        # nothing extra. First run after deploy shows "--"; the next shows a rate.
+        st = load_json(STATE_FILE, {})
+        prev = st.get("grad_hist", {})
+        now_s = time.time()
+        for r_ in rows:
+            p = prev.get(r_["mint"])
+            if p:
+                dt_h = (now_s - p["ts"]) / 3600
+                if dt_h > 0.02:
+                    r_["velocity"] = (r_["progress"] - p["pct"]) / dt_h
+                    r_["vel_why"] = ""
+                    r_["gap_h"] = dt_h
+                else:
+                    r_["vel_why"] = "seen <1min ago"
+            else:
+                r_["vel_why"] = "first sighting"
+
+        st["grad_hist"] = {r_["mint"]: {"pct": r_["progress"], "ts": now_s}
+                           for r_ in rows}
+        # keep anything seen in the last 6h so a token that drops out of the
+        # band briefly still has history when it returns
+        for m_, v_ in prev.items():
+            if m_ not in st["grad_hist"] and now_s - v_["ts"] < 21600:
+                st["grad_hist"][m_] = v_
+        with open(STATE_FILE, "w") as fh:
+            json.dump(st, fh, indent=1, sort_keys=True)
+
+        seen_before = sum(1 for r_ in rows if r_.get("velocity") is not None)
+        print(f"{seen_before}/{len(rows)} seen in a previous run "
+              f"(velocity needs two sightings)\n")
+
         print(f"{'prog':>6} {'vel/hr':>9} {'read':<12} {'pooled':>9} "
               f"{'n':>3}  {'symbol':<12}  mint")
         print("-" * 100)
         for r_ in rows:
-            vel = r_["velocity"]
+            vel = r_.get("velocity")
             kind, _ = classify_fill(vel)
             vtxt = f"{vel:+.1f}%" if vel is not None else "  --"
             if vel is None and r_.get("vel_why"):
                 kind = r_["vel_why"][:12]
+            elif vel is not None and r_.get("gap_h"):
+                kind = f"{kind} {r_['gap_h']:.1f}h"[:12]
             print(f"{r_['progress']:>5.1f}% {vtxt:>9} {kind:<12} "
                   f"${r_['quote_usd']:>8,.0f} {r_['samples']:>3}  "
                   f"{str(r_['symbol'])[:12]:<12}  {r_['mint']}")
