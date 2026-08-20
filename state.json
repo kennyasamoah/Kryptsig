@@ -2,13 +2,10 @@
  "alert_day": "2026-08-20",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 297,
+ "credits_used": 298,
  "hot_list": [
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
-  "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5",
-  "3vzCDcWV1gWExDYtd2YGtoAD1wvMNv9ceiGzFs7ZrnpM",
-  "68C62WPYiiNZxprbuaMj2ULXpiTDKcs5xsX7kBGnyajR",
-  "CD5HDt23sjGud5VTWsv51BMPey2Qf9qH5cyswWmjBDdq"
+  "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5"
  ],
  "last_alert": {
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo": 1787182804.997324
@@ -67,11 +64,12 @@
     12,
     6,
     7,
-    7
+    7,
+    9
    ],
    "last_age_h": 1406.4,
    "last_candles": 168,
-   "last_liq": 4062767.0076,
+   "last_liq": 4058026.8973,
    "last_try": "2026-08-19T21:31:57+00:00",
    "mint": "MUxEsUKSMACyw5fZf68wxf5FLnZVhtU9CwH8uNNGay1",
    "name": "MU / USDC",
@@ -451,11 +449,12 @@
     45,
     49,
     19,
-    20
+    20,
+    16
    ],
    "last_age_h": 57.599999999999994,
    "last_candles": 54,
-   "last_liq": 343509.8095,
+   "last_liq": 346319.1308,
    "last_try": "2026-08-20T00:01:05+00:00",
    "mint": "zj1jpp7QMveWHLs61vL9KMZf254KvW7j4AAmBF8ry2k",
    "name": "BULLSHIT / SOL",
@@ -1012,11 +1011,12 @@
     25,
     38,
     30,
-    28
+    28,
+    19
    ],
    "last_age_h": 316.79999999999995,
    "last_candles": 168,
-   "last_liq": 172141.5374,
+   "last_liq": 172665.6153,
    "last_try": "2026-08-18T03:28:51+00:00",
    "mint": "HxQhDGYqyjorgogMJx7YbBHADEDxuHhLnMMmr6VYpyn",
    "name": "MANLET / SOL",
@@ -1608,11 +1608,12 @@
     272,
     411,
     163,
-    140
+    140,
+    116
    ],
    "last_age_h": 247.20000000000002,
    "last_candles": 168,
-   "last_liq": 164416.83,
+   "last_liq": 160882.628,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
@@ -2129,11 +2130,12 @@
     279,
     258,
     219,
-    217
+    217,
+    199
    ],
    "last_age_h": 57.599999999999994,
    "last_candles": 10,
-   "last_liq": 193788.5809,
+   "last_liq": 189392.9728,
    "last_try": "2026-08-18T03:28:53+00:00",
    "mint": "zj1jpp7QMveWHLs61vL9KMZf254KvW7j4AAmBF8ry2k",
    "name": "BULLSHIT / SOL",
