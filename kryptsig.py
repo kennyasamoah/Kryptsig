@@ -385,7 +385,7 @@ def bq_graduating(lo_pct=70.0, hi_pct=99.5, limit=40):
             ) {
               progress: calculate(
                 expression: "100 - ((($Pool_Base_PostAmount - 206900000) * 100) / 793100000)")
-              Block { Time }
+              Block { Time Slot }
               Pool {
                 Base { PostAmount }
                 Quote { PostAmountInUSD }
@@ -446,6 +446,7 @@ def bq_graduating(lo_pct=70.0, hi_pct=99.5, limit=40):
             "symbol": bc.get("Symbol") or bc.get("Name") or "?",
             "quote_usd": num((pool.get("Quote") or {}).get("PostAmountInUSD")),
             "ts": (r_.get("Block") or {}).get("Time", ""),
+            "slot": (r_.get("Block") or {}).get("Slot"),
         })
 
     # Collapse to one row per mint. The duplicates are consecutive trade
@@ -457,18 +458,37 @@ def bq_graduating(lo_pct=70.0, hi_pct=99.5, limit=40):
 
     tokens = []
     for mint, rows_ in by_mint.items():
-        rows_.sort(key=lambda x: x["ts"])
+        have_ts = any(r2.get("ts") for r2 in rows_)
+        if have_ts:
+            rows_.sort(key=lambda x: x["ts"] or "")
+        else:
+            rows_.sort(key=lambda x: x.get("slot") or 0)
         newest, oldest = rows_[-1], rows_[0]
-        vel = None
+
+        vel, vel_why = None, ""
+        dt_h = 0.0
         try:
-            t1 = datetime.fromisoformat(newest["ts"].replace("Z", "+00:00"))
-            t0 = datetime.fromisoformat(oldest["ts"].replace("Z", "+00:00"))
-            dt_h = (t1 - t0).total_seconds() / 3600
+            if have_ts:
+                t1 = datetime.fromisoformat(str(newest["ts"]).replace("Z", "+00:00"))
+                t0 = datetime.fromisoformat(str(oldest["ts"]).replace("Z", "+00:00"))
+                dt_h = (t1 - t0).total_seconds() / 3600
+            elif newest.get("slot") and oldest.get("slot"):
+                # Solana slots are ~0.4s apart; good enough for a rate.
+                dt_h = (int(newest["slot"]) - int(oldest["slot"])) * 0.4 / 3600
+            else:
+                vel_why = "no Block.Time or Slot returned"
+        except (ValueError, AttributeError, TypeError) as e:
+            vel_why = f"parse: {e}"
+
+        if not vel_why:
             if dt_h > 0.01:
                 vel = (newest["progress"] - oldest["progress"]) / dt_h
-        except (ValueError, AttributeError):
-            pass
+            elif len(rows_) < 2:
+                vel_why = "only 1 snapshot"
+            else:
+                vel_why = f"snapshots span {dt_h*60:.1f} min -- too close"
         tokens.append({
+            "vel_why": vel_why,
             "mint": mint,
             "symbol": newest["symbol"],
             "progress": newest["progress"],
@@ -1551,6 +1571,8 @@ def main():
             vel = r_["velocity"]
             kind, _ = classify_fill(vel)
             vtxt = f"{vel:+.1f}%" if vel is not None else "  --"
+            if vel is None and r_.get("vel_why"):
+                kind = r_["vel_why"][:12]
             print(f"{r_['progress']:>5.1f}% {vtxt:>9} {kind:<12} "
                   f"${r_['quote_usd']:>8,.0f} {r_['samples']:>3}  "
                   f"{str(r_['symbol'])[:12]:<12}  {r_['mint']}")
