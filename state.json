@@ -2,12 +2,9 @@
  "alert_day": "2026-08-20",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 324,
+ "credits_used": 325,
  "hot_list": [
-  "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5",
-  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
-  "68C62WPYiiNZxprbuaMj2ULXpiTDKcs5xsX7kBGnyajR",
-  "3vzCDcWV1gWExDYtd2YGtoAD1wvMNv9ceiGzFs7ZrnpM"
+  "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5"
  ],
  "last_alert": {
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo": 1787182804.997324
@@ -76,11 +73,12 @@
     5,
     1,
     3,
-    13
+    13,
+    21
    ],
    "last_age_h": 1416.0,
    "last_candles": 168,
-   "last_liq": 3990808.0222,
+   "last_liq": 4041626.2584,
    "last_try": "2026-08-19T21:31:57+00:00",
    "mint": "MUxEsUKSMACyw5fZf68wxf5FLnZVhtU9CwH8uNNGay1",
    "name": "MU / USDC",
@@ -498,11 +496,12 @@
     5,
     36,
     31,
-    28
+    28,
+    31
    ],
    "last_age_h": 67.19999999999999,
    "last_candles": 54,
-   "last_liq": 328201.3758,
+   "last_liq": 318578.331,
    "last_try": "2026-08-20T00:01:05+00:00",
    "mint": "zj1jpp7QMveWHLs61vL9KMZf254KvW7j4AAmBF8ry2k",
    "name": "BULLSHIT / SOL",
@@ -1111,11 +1110,12 @@
     29,
     24,
     47,
-    33
+    33,
+    45
    ],
-   "last_age_h": 324.0,
+   "last_age_h": 326.4,
    "last_candles": 168,
-   "last_liq": 172861.7186,
+   "last_liq": 179804.3165,
    "last_try": "2026-08-18T03:28:51+00:00",
    "mint": "HxQhDGYqyjorgogMJx7YbBHADEDxuHhLnMMmr6VYpyn",
    "name": "MANLET / SOL",
@@ -1748,11 +1748,12 @@
     75,
     45,
     44,
-    42
+    42,
+    39
    ],
-   "last_age_h": 254.39999999999998,
+   "last_age_h": 256.79999999999995,
    "last_candles": 168,
-   "last_liq": 151786.9594,
+   "last_liq": 151406.525,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
