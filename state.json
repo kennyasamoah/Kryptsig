@@ -2,7 +2,7 @@
  "alert_day": "2026-08-20",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 298,
+ "credits_used": 299,
  "hot_list": [
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
   "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5"
@@ -65,11 +65,12 @@
     6,
     7,
     7,
+    9,
     9
    ],
    "last_age_h": 1406.4,
    "last_candles": 168,
-   "last_liq": 4058026.8973,
+   "last_liq": 4052765.4275,
    "last_try": "2026-08-19T21:31:57+00:00",
    "mint": "MUxEsUKSMACyw5fZf68wxf5FLnZVhtU9CwH8uNNGay1",
    "name": "MU / USDC",
@@ -1609,11 +1610,12 @@
     411,
     163,
     140,
-    116
+    116,
+    117
    ],
    "last_age_h": 247.20000000000002,
    "last_candles": 168,
-   "last_liq": 160882.628,
+   "last_liq": 156992.0182,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
