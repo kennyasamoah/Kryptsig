@@ -2,13 +2,9 @@
  "alert_day": "2026-08-20",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 307,
+ "credits_used": 308,
  "hot_list": [
-  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
-  "68C62WPYiiNZxprbuaMj2ULXpiTDKcs5xsX7kBGnyajR",
-  "5Jm4GnWPt62kphmhEET6rjzzFjvsfNxNqdpEuGwp2U9q",
-  "HZp4qwbMUCdwj6ATZCpUZCKeAhBZmWSwj7kLMgYA6Ztg",
-  "GwTzkbi3ogqYSphVeSMGaBwdkBvEzBo87dmDWyCxd1aj"
+  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo"
  ],
  "last_alert": {
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo": 1787182804.997324
@@ -761,11 +757,12 @@
     86,
     38,
     37,
-    39
+    39,
+    25
    ],
-   "last_age_h": 62.400000000000006,
+   "last_age_h": 64.80000000000001,
    "last_candles": 62,
-   "last_liq": 148930.5162,
+   "last_liq": 148074.1837,
    "last_try": "2026-08-20T04:55:14+00:00",
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
@@ -999,11 +996,12 @@
     28,
     19,
     12,
-    25
+    25,
+    21
    ],
    "last_age_h": 319.20000000000005,
    "last_candles": 168,
-   "last_liq": 176912.0074,
+   "last_liq": 174787.5577,
    "last_try": "2026-08-18T03:28:51+00:00",
    "mint": "HxQhDGYqyjorgogMJx7YbBHADEDxuHhLnMMmr6VYpyn",
    "name": "MANLET / SOL",
@@ -1583,11 +1581,12 @@
     116,
     117,
     123,
-    86
+    86,
+    93
    ],
    "last_age_h": 249.60000000000002,
    "last_candles": 168,
-   "last_liq": 151731.6903,
+   "last_liq": 151734.134,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
@@ -2825,11 +2824,12 @@
     8,
     8,
     11,
-    10
+    10,
+    26
    ],
    "last_age_h": 76.80000000000001,
    "last_candles": 27,
-   "last_liq": 43519.8376,
+   "last_liq": 42351.8077,
    "last_try": "2026-08-18T05:47:17+00:00",
    "mint": "2WDjdDj6W1PJpQ8ea4nXZ95VFKNko18DtGYzqUuipump",
    "name": "BILLY / SOL",
@@ -2932,11 +2932,12 @@
     7,
     17,
     1,
-    28
+    28,
+    16
    ],
-   "last_age_h": 62.400000000000006,
+   "last_age_h": 64.80000000000001,
    "last_candles": 13,
-   "last_liq": 151915.9129,
+   "last_liq": 126475.0608,
    "last_try": "2026-08-18T03:28:58+00:00",
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
