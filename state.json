@@ -2,20 +2,18 @@
  "alert_day": "2026-08-20",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 274,
+ "credits_used": 284,
  "hot_list": [
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
-  "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5",
-  "2C7PaLGC7wtQZWR9wa7QT2bthqTDyzcBL6BEYFGdSA5e",
-  "GwTzkbi3ogqYSphVeSMGaBwdkBvEzBo87dmDWyCxd1aj"
+  "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5"
  ],
  "last_alert": {
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo": 1787182804.997324
  },
- "last_full_scan": 1787190817.205634,
- "last_heartbeat": 1787104498.6911247,
- "last_mature": 79,
- "next_page": 7,
+ "last_full_scan": 1787195016.1448724,
+ "last_heartbeat": 1787195034.2736664,
+ "last_mature": 76,
+ "next_page": 10,
  "pools": {
   "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5": {
    "added": "2026-08-18T18:58:32+00:00",
@@ -62,11 +60,12 @@
     12,
     5,
     8,
-    8
+    8,
+    12
    ],
    "last_age_h": 1404.0,
    "last_candles": 168,
-   "last_liq": 4058534.8706,
+   "last_liq": 4023667.7908,
    "last_try": "2026-08-19T21:31:57+00:00",
    "mint": "MUxEsUKSMACyw5fZf68wxf5FLnZVhtU9CwH8uNNGay1",
    "name": "MU / USDC",
@@ -78,10 +77,11 @@
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
-    3
+    3,
+    0
    ],
    "last_age_h": 0.0,
-   "last_liq": 8467.3072,
+   "last_liq": 19560.9532,
    "mint": "2KmpFkj75GqQF9EbXZ4yhsgaqe7GK5jNzLAAeAqspump",
    "name": "FFIVE / SOL",
    "src": "new",
@@ -101,11 +101,12 @@
     111,
     103,
     156,
-    59
+    59,
+    61
    ],
    "last_age_h": 14.399999999999999,
    "last_candles": 5,
-   "last_liq": 26296.8679,
+   "last_liq": 26094.0216,
    "last_try": "2026-08-19T16:04:40+00:00",
    "mint": "FtXH4AAgR8KMBR8zDfTfHnYdSStw2Am3iwq8TpoHpump",
    "name": "Intismeran / SOL",
@@ -119,10 +120,11 @@
    "buyer_hist": [
     52,
     0,
+    0,
     0
    ],
-   "last_age_h": 2.4000000000000004,
-   "last_liq": 2176.0453,
+   "last_age_h": 4.800000000000001,
+   "last_liq": 2191.6645,
    "mint": "AiLZkk4Pvdu7D1ETUNdYm93Pee1SGhQbA8WWaWp1cZHN",
    "name": "SOLDIER / SOL",
    "src": "new",
@@ -165,30 +167,17 @@
     245,
     70,
     94,
-    53
+    53,
+    59
    ],
-   "last_age_h": 57.599999999999994,
+   "last_age_h": 60.0,
    "last_candles": 55,
-   "last_liq": 66761.5438,
+   "last_liq": 64697.1722,
    "last_try": "2026-08-19T22:44:37+00:00",
    "mint": "7fDdLy2rmQKsPCkqUXEd1mN7yDfEzArc4VrctWmfkJBK",
    "name": "Z500 / SOL",
    "src": "top6",
    "tries": 2
-  },
-  "2CiwyJChPguTkuZWn4ZkH7bfjuYkCySiZmx2A9VYUgXp": {
-   "added": "2026-08-20T01:53:46+00:00",
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    990
-   ],
-   "last_age_h": 2.4000000000000004,
-   "last_liq": 82238.5626,
-   "mint": "HWx1iBSu6UYq5wYJYWVxVPxwQhuzEZc597U4bMPX9qeB",
-   "name": "Monkey / SOL",
-   "src": "top6",
-   "tries": 0
   },
   "2DmTQCshQxEq1D2kKrJth9UKE8XemtFMh2gGFDnEPgL8": {
    "added": "2026-08-18T17:54:32+00:00",
@@ -219,11 +208,12 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 38.400000000000006,
    "last_candles": 2,
-   "last_liq": 64848.408,
+   "last_liq": 64425.3395,
    "last_try": "2026-08-18T18:58:35+00:00",
    "mint": "EFgJ3r7yRNeapKEAkAUvYwnEgytNg5hremKu4vNmQZuK",
    "name": "XST / SOL",
@@ -241,11 +231,12 @@
     1,
     1,
     0,
-    1
+    1,
+    0
    ],
    "last_age_h": 7.199999999999999,
    "last_candles": 5,
-   "last_liq": 2166.9861,
+   "last_liq": 2142.478,
    "last_try": "2026-08-19T20:01:18+00:00",
    "mint": "CzymhMxfqWxuf4y5xiAdRYXBK7ozMLLum2g6WDGgpump",
    "name": "HIGHER / SOL",
@@ -257,10 +248,11 @@
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
-    1871
+    1871,
+    0
    ],
-   "last_age_h": 0.0,
-   "last_liq": 170092.4988,
+   "last_age_h": 2.4000000000000004,
+   "last_liq": 169093.5642,
    "mint": "EJj2jCjMSCLYnDP8BZSGvM1JBaMQbvnRVRP9VpP1ow3E",
    "name": "MRNA / SOL",
    "src": "top6",
@@ -292,11 +284,12 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 31.200000000000003,
+   "last_age_h": 33.599999999999994,
    "last_candles": 5,
-   "last_liq": 298988.9514,
+   "last_liq": 297894.485,
    "last_try": "2026-08-18T22:43:41+00:00",
    "mint": "9Gb4STRaquQDPr1kppsB7asrAVbcUmMBtrTpPW7SUhvF",
    "name": "67coin / SOL",
@@ -331,11 +324,12 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 33.599999999999994,
    "last_candles": 4,
-   "last_liq": 180047.4688,
+   "last_liq": 179512.6303,
    "last_try": "2026-08-18T21:02:40+00:00",
    "mint": "5rSstRWDyBi8SvXWZ4pps2xHuDekaDX6uFnj1bKhyk1c",
    "name": "DONALD / SOL",
@@ -364,34 +358,29 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 24.0,
    "last_candles": 3,
-   "last_liq": 269717.9618,
+   "last_liq": 270646.3941,
    "last_try": "2026-08-19T04:53:54+00:00",
    "mint": "Ehrh4NJL5ZBwg69bk74iHBXkS277FieXMJAeo6ai7Wpa",
    "name": "AAPL / SOL",
    "src": "top8",
    "tries": 0
   },
-  "3B39SUxskZ4iv2HcK21yB3GAq6e2nxRoCTy1SSm9XdMj": {
-   "added": "2026-08-19T17:32:22+00:00",
+  "2s87YuhFFtF24oF1Rt4ykWf2WqujugFgkHxtQrywU6BY": {
+   "added": "2026-08-20T03:03:39+00:00",
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
-    172,
-    146,
-    3,
-    2,
-    0,
-    0,
-    0
+    7
    ],
-   "last_age_h": 7.199999999999999,
-   "last_liq": 2153.8232,
-   "mint": "Hopmjrxis8kKQe4GRVsHjYxAbr6DW3Z615AVHinGpump",
-   "name": "CUTOFF / SOL",
+   "last_age_h": 0.0,
+   "last_liq": 2007.687,
+   "mint": "4NVnfbqBN2KWvWSrj53A9A4TapF43ywSUAggjwt1pump",
+   "name": "SSD / SOL",
    "src": "new",
    "tries": 0
   },
@@ -439,11 +428,12 @@
     79,
     70,
     33,
-    45
+    45,
+    49
    ],
    "last_age_h": 55.199999999999996,
    "last_candles": 54,
-   "last_liq": 325456.4804,
+   "last_liq": 344818.5885,
    "last_try": "2026-08-20T00:01:05+00:00",
    "mint": "zj1jpp7QMveWHLs61vL9KMZf254KvW7j4AAmBF8ry2k",
    "name": "BULLSHIT / SOL",
@@ -469,11 +459,12 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 19.200000000000003,
    "last_candles": 2,
-   "last_liq": 10412.1608,
+   "last_liq": 10433.5048,
    "last_try": "2026-08-19T17:32:29+00:00",
    "mint": "F5SGo5kRU3JE89cDh4AueZkf5r21SzT9d8JUU7APpump",
    "name": "Lively AI / USDC",
@@ -502,11 +493,12 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 26.400000000000002,
+   "last_age_h": 28.799999999999997,
    "last_candles": 1,
-   "last_liq": 58325.6023,
+   "last_liq": 58335.438,
    "last_try": "2026-08-19T06:05:00+00:00",
    "mint": "6McxfpALnvsN8BFiuT9qkp62SytuiPQJhGAaanvUEP6i",
    "name": "BTW / SOL",
@@ -551,9 +543,10 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 69.6,
+   "last_age_h": 72.0,
    "last_candles": 10,
    "last_liq": 63767.7686,
    "last_try": "2026-08-20T01:53:47+00:00",
@@ -571,10 +564,11 @@
     252,
     105,
     60,
-    27
+    27,
+    74
    ],
-   "last_age_h": 9.600000000000001,
-   "last_liq": 13573.76,
+   "last_age_h": 12.0,
+   "last_liq": 14180.4352,
    "mint": "Dmt4ttDmHYBpRhmUrZbo4mQLovtvCdAjQwhTfPppump",
    "name": "BUY / SOL",
    "src": "top10",
@@ -588,10 +582,11 @@
     8,
     6,
     0,
+    0,
     0
    ],
    "last_age_h": 4.800000000000001,
-   "last_liq": 2171.9405,
+   "last_liq": 2187.0444,
    "mint": "B2mH5VbvkLoJT7anfNtu2jqhxu9iYu7jyRmNgvGJYg5Y",
    "name": "WSB / SOL",
    "src": "new",
@@ -604,26 +599,13 @@
    "buyer_hist": [
     9,
     0,
+    0,
     0
    ],
-   "last_age_h": 2.4000000000000004,
-   "last_liq": 4135.8667,
+   "last_age_h": 4.800000000000001,
+   "last_liq": 4141.7096,
    "mint": "9NQ61t6w1CN91ZL5VCfJBtQbpnG2DoJ8SxhYYahmpump",
    "name": "DTG / SOL",
-   "src": "new",
-   "tries": 0
-  },
-  "4zbv8CsGNgGJbZGGkgBTFxRrqMwDgixMFrM6KKSsdBZF": {
-   "added": "2026-08-20T01:53:40+00:00",
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    144
-   ],
-   "last_age_h": 0.0,
-   "last_liq": 4993.1214,
-   "mint": "7KKo2HNdHWts5FGPatfYh1AUPUqHb5aJ7CcmGQJmpump",
-   "name": "SKULL / SOL",
    "src": "new",
    "tries": 0
   },
@@ -657,11 +639,12 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 40.8,
+   "last_age_h": 43.2,
    "last_candles": 5,
-   "last_liq": 225316.172,
+   "last_liq": 223642.4489,
    "last_try": "2026-08-18T15:38:34+00:00",
    "mint": "GHQqVZAiPaW4wsacDRm6UehtRHQJDmToLaCuBE8itmun",
    "name": "SHOBON / SOL",
@@ -669,9 +652,10 @@
   },
   "5FYEKvSaavc8G8jyughXrQDGvUZiZmMRh3nKgmFudQHW": {
    "added": "2026-08-18T18:58:28+00:00",
-   "attempts": 1,
+   "algo": 3,
+   "attempts": 2,
    "baseline": 296817.855625956,
-   "baseline_ts": "2026-08-19T03:04:21+00:00",
+   "baseline_ts": "2026-08-20T03:03:47+00:00",
    "buyer_hist": [
     0,
     0,
@@ -695,16 +679,17 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 48.0,
+   "last_age_h": 50.400000000000006,
    "last_candles": 6,
-   "last_liq": 103164.9328,
-   "last_try": "2026-08-19T03:04:21+00:00",
+   "last_liq": 102680.196,
+   "last_try": "2026-08-20T03:03:47+00:00",
    "mint": "EGqRC16ajDrio8qnq6UaUCH5xrNTp3d73Wp1ASi8TFcw",
    "name": "Grok4.6 / SOL",
    "src": "top8",
-   "tries": 1
+   "tries": 2
   },
   "5Jm4GnWPt62kphmhEET6rjzzFjvsfNxNqdpEuGwp2U9q": {
    "added": "2026-08-17T22:32:38+00:00",
@@ -754,14 +739,29 @@
     69,
     124,
     133,
-    32
+    32,
+    86
    ],
-   "last_age_h": 57.599999999999994,
+   "last_age_h": 60.0,
    "last_candles": 9,
-   "last_liq": 148145.9298,
+   "last_liq": 143238.3895,
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
    "tries": 1
+  },
+  "5KjV19HiiogDFi2odqeRZzN4HLJ2oDkyRbTv7t73cE3W": {
+   "added": "2026-08-20T03:03:37+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    11
+   ],
+   "last_age_h": 0.0,
+   "last_liq": 2523.7531,
+   "mint": "6G6z5r3ryrbKcSerNatBT4Bvrar5epDzaPmzxd89pump",
+   "name": "BARA / SOL",
+   "src": "new",
+   "tries": 0
   },
   "5M577P5MmvHhQZa4xr3ho9Sro8LnAz3C7stiG6NSVZRN": {
    "added": "2026-08-18T13:13:46+00:00",
@@ -794,11 +794,12 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 36.0,
+   "last_age_h": 38.400000000000006,
    "last_candles": 1,
-   "last_liq": 35318.5707,
+   "last_liq": 35089.8463,
    "last_try": "2026-08-18T13:13:49+00:00",
    "mint": "7qiZdB4udYcw7uvkCQrP279m2RF5r13gJVymiTXgZ1CR",
    "name": "OKAI / SOL",
@@ -828,34 +829,16 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 28.799999999999997,
+   "last_age_h": 31.200000000000003,
    "last_candles": 1,
-   "last_liq": 144754.4624,
+   "last_liq": 144172.7287,
    "last_try": "2026-08-19T07:08:06+00:00",
    "mint": "7MPMFKe5M1TS7Y1t5EZQxxSVLy1cykJrvD1KwrBhuMQT",
    "name": "\u725b\u6765 / SOL",
    "src": "top10",
-   "tries": 0
-  },
-  "5fDJ5Snxjr8hvB2ubL7mdFjvbfj88n2vFaqo4akU2VNa": {
-   "added": "2026-08-19T18:55:35+00:00",
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    34,
-    1567,
-    23,
-    20,
-    23,
-    22
-   ],
-   "last_age_h": 7.199999999999999,
-   "last_liq": 415808.2559,
-   "mint": "5h18Fxy1q9DUSo2Zhum2pvjnnd1DhtipyCGKwpXPwjrN",
-   "name": "Anthropic / SOL",
-   "src": "new",
    "tries": 0
   },
   "5pZ9Hkqq3trfzftPxbshwYQi31G6Cg3taJUXgkotk9tD": {
@@ -895,11 +878,12 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 48.0,
    "last_candles": 1,
-   "last_liq": 9389.8723,
+   "last_liq": 9345.6833,
    "last_try": "2026-08-18T03:13:58+00:00",
    "mint": "8BDsCoyWE5X979mQrgaio7C82vRzKr47MbRxuQkc5pbD",
    "name": "FAITH / USDT",
@@ -913,10 +897,11 @@
     124,
     96,
     65,
-    218
+    218,
+    53
    ],
    "last_age_h": 4.800000000000001,
-   "last_liq": 16539.6673,
+   "last_liq": 14446.5863,
    "mint": "FcaSJPRwUj7weqPXVmew4wiXSsmdRadWWZkuYrSWpump",
    "name": "GEM / SOL",
    "src": "new",
@@ -972,11 +957,12 @@
     38,
     31,
     27,
-    25
+    25,
+    38
    ],
    "last_age_h": 314.4,
    "last_candles": 168,
-   "last_liq": 171465.4074,
+   "last_liq": 165569.6497,
    "last_try": "2026-08-18T03:28:51+00:00",
    "mint": "HxQhDGYqyjorgogMJx7YbBHADEDxuHhLnMMmr6VYpyn",
    "name": "MANLET / SOL",
@@ -990,10 +976,11 @@
     17,
     85,
     8,
-    2
+    2,
+    5
    ],
    "last_age_h": 4.800000000000001,
-   "last_liq": 5680.3008,
+   "last_liq": 5519.3104,
    "mint": "5cak5AFeJ4YxS3dgkq392E89G6WtoxtLky65SGjrpump",
    "name": "BULL / SOL",
    "src": "new",
@@ -1017,10 +1004,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 19.200000000000003,
-   "last_liq": 16742.7757,
+   "last_liq": 16777.097,
    "mint": "3SLG1WLGNJo26LnnkttKqXLicHQYoLki3YtxbxWUpump",
    "name": "VOLWAR / SOL",
    "src": "new",
@@ -1045,10 +1033,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 26.400000000000002,
-   "last_liq": 489977.9197,
+   "last_liq": 491455.5257,
    "mint": "8ZGFGwCNJ3rvXxJcwwzRjWYGgJAJLchrchXyLtCAH12x",
    "name": "SPCX / SOL",
    "src": "top3",
@@ -1084,11 +1073,12 @@
     52,
     39,
     48,
-    44
+    44,
+    28
    ],
-   "last_age_h": 38.400000000000006,
+   "last_age_h": 40.8,
    "last_candles": 5,
-   "last_liq": 23111.8373,
+   "last_liq": 23399.3081,
    "last_try": "2026-08-18T15:38:32+00:00",
    "mint": "DLYQBXkRo43Ct96fd9Cr7y5tZP5yQKUBLMTZU92epump",
    "name": "67coin / SOL",
@@ -1113,10 +1103,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 19.200000000000003,
-   "last_liq": 8064.9087,
+   "last_age_h": 21.6,
+   "last_liq": 8090.7446,
    "mint": "CPZGSmQGne6gbpPagk1W8iviiUZrx7sBnHJDs2UZpump",
    "name": "KITKAT / SOL",
    "src": "new",
@@ -1130,13 +1121,28 @@
     2565,
     1093,
     324,
-    123
+    123,
+    71
    ],
    "last_age_h": 7.199999999999999,
-   "last_liq": 26070.9398,
+   "last_liq": 24390.1138,
    "mint": "3bLw2fp44SGrAp19XAtaLmutCksRDRDvjLyTbWD7iEqV",
    "name": "TROOPET / SOL",
    "src": "top7",
+   "tries": 0
+  },
+  "76F866joD9HTUMmM2mRn1FoZBQGVZYLeji8v8Ppjr1oM": {
+   "added": "2026-08-20T03:03:37+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    11
+   ],
+   "last_age_h": 0.0,
+   "last_liq": 16896.1991,
+   "mint": "J2QWwQDEeHPm99xGWCuXqW3nFmMV68F7HWyYNHMw5oda",
+   "name": "Anthropic / SOL",
+   "src": "new",
    "tries": 0
   },
   "78Ub6aaxmrV7vnENjgwqAh9B2mEd3tnACqFQXiMFDt6P": {
@@ -1165,10 +1171,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 33.599999999999994,
-   "last_liq": 321653.776,
+   "last_age_h": 36.0,
+   "last_liq": 320344.8027,
    "mint": "DodixcnjfRrU3jnEQbA3ZRqJvZunbT7n6nAUiop5eJ17",
    "name": "TSLA / SOL",
    "src": "top1",
@@ -1191,10 +1198,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 19.200000000000003,
-   "last_liq": 177760.6661,
+   "last_liq": 178225.575,
    "mint": "A3evs7EphXmDAzXv1HEVSBraqHSKbCwtnMzwqSVWodQa",
    "name": "Unitree / SOL",
    "src": "top10",
@@ -1235,9 +1243,10 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 69.6,
+   "last_age_h": 72.0,
    "last_candles": 4,
    "last_liq": 162409.4858,
    "last_try": "2026-08-18T10:35:51+00:00",
@@ -1254,10 +1263,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 4.800000000000001,
-   "last_liq": 3383.414,
+   "last_age_h": 7.199999999999999,
+   "last_liq": 3382.7289,
    "mint": "77UGsSXSFC5AeVhSix9tT4yM7ASpzyLsLqucYcLXpump",
    "name": "BLUEY / SOL",
    "src": "new",
@@ -1269,10 +1279,11 @@
    "baseline_ts": null,
    "buyer_hist": [
     10,
+    0,
     0
    ],
    "last_age_h": 2.4000000000000004,
-   "last_liq": 2060.5508,
+   "last_liq": 2054.2799,
    "mint": "HWprc7a8fJiHyrgY6cWkLoPePN1kjcVdp1LwycwGpump",
    "name": "NM / SOL",
    "src": "new",
@@ -1285,26 +1296,13 @@
    "buyer_hist": [
     11,
     0,
+    0,
     0
    ],
-   "last_age_h": 2.4000000000000004,
-   "last_liq": 2283.5735,
+   "last_age_h": 4.800000000000001,
+   "last_liq": 2286.9336,
    "mint": "E9RpCm9a8GQjV2i3WBkB4iR9igeFCZAZpy7HAvYapump",
    "name": "SOLDIER / SOL",
-   "src": "new",
-   "tries": 0
-  },
-  "8591ZoCSmirAyoHE4LTHkA4BgzBNiPQgyRo9J813gDbK": {
-   "added": "2026-08-20T01:53:38+00:00",
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    99
-   ],
-   "last_age_h": 0.0,
-   "last_liq": 14442.4106,
-   "mint": "6DVVtpHXwgV1Rpv6XTJpqnWi3a6wzVjXc8KFPYbMUW85",
-   "name": "sh4vwyt / SOL",
    "src": "new",
    "tries": 0
   },
@@ -1335,31 +1333,13 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 45.599999999999994,
-   "last_liq": 46850.0742,
+   "last_age_h": 48.0,
+   "last_liq": 46599.4324,
    "mint": "6pZwvfvW32jwqSL9DB2YsUVbwXtKFmsZyHri6cxdqKkQ",
    "name": "\u5e01\u5b89\u6148\u5584 / SOL",
-   "src": "top10",
-   "tries": 0
-  },
-  "8HvZw2XnDWX4droykGWmrEkf7FE8kNFaS3HaLejmsFzF": {
-   "added": "2026-08-19T18:55:40+00:00",
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    1199,
-    1200,
-    1195,
-    1189,
-    1188,
-    1185
-   ],
-   "last_age_h": 12.0,
-   "last_liq": 121024.9702,
-   "mint": "8BeWGcjerYjZxgLNEGcFUPyZA8vY8voPGGMN32q5ZUz5",
-   "name": "USWS / SOL",
    "src": "top10",
    "tries": 0
   },
@@ -1377,10 +1357,11 @@
     486,
     644,
     526,
-    689
+    689,
+    713
    ],
-   "last_age_h": 14.399999999999999,
-   "last_liq": 41956.3116,
+   "last_age_h": 16.799999999999997,
+   "last_liq": 38642.6821,
    "mint": "Cbku1JK6cKAGyvVnNmjS6QNNp3Qc7NNbWQxjMY5Y2qT3",
    "name": "SPCX / SOL",
    "src": "top9",
@@ -1393,10 +1374,11 @@
    "buyer_hist": [
     695,
     723,
-    664
+    664,
+    452
    ],
    "last_age_h": 180.0,
-   "last_liq": 225639.3541,
+   "last_liq": 208537.0581,
    "mint": "LFEJTxJ9yi6ojGDFpjbGfABLbH55Fc3oEK8syJJpump",
    "name": "DPG / SOL",
    "src": "top9",
@@ -1414,10 +1396,11 @@
     4,
     10,
     12,
-    3
+    3,
+    2
    ],
-   "last_age_h": 9.600000000000001,
-   "last_liq": 5965.717,
+   "last_age_h": 12.0,
+   "last_liq": 5444.1505,
    "mint": "22auj9zVTS2fZuAboPeLeigttFdm7oPgpxxp4itHpump",
    "name": "RatCoin / SOL",
    "src": "new",
@@ -1429,26 +1412,13 @@
    "baseline_ts": null,
    "buyer_hist": [
     2,
+    0,
     0
    ],
    "last_age_h": 2.4000000000000004,
-   "last_liq": 5889.3645,
+   "last_liq": 5871.4198,
    "mint": "5yFUhbJfapkheJViSpoxRi6osBKq62jJ4mgXuLF7pump",
    "name": "BBUSTER / SOL",
-   "src": "new",
-   "tries": 0
-  },
-  "9AAKAZw7vRZMUifAyS5VgNbnxNRxMLQuu67nLcwYFEDe": {
-   "added": "2026-08-20T01:53:38+00:00",
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    5
-   ],
-   "last_age_h": 0.0,
-   "last_liq": 2199.6482,
-   "mint": "ARRjDS8Bieatkh3PwqfXsnbPPWjvGJPzNE2H3WXupump",
-   "name": "sh4vwyt / SOL",
    "src": "new",
    "tries": 0
   },
@@ -1478,10 +1448,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 36.0,
-   "last_liq": 298779.4674,
+   "last_liq": 297645.2446,
    "mint": "4g5bBMvugH4bAXX5qwLRvgjhV4FpoQm2VigBQss2wgkE",
    "name": "NVDA / SOL",
    "src": "top1",
@@ -1494,10 +1465,11 @@
    "buyer_hist": [
     5,
     0,
+    0,
     0
    ],
-   "last_age_h": 2.4000000000000004,
-   "last_liq": 2410.8546,
+   "last_age_h": 4.800000000000001,
+   "last_liq": 2414.1203,
    "mint": "8BKrFEeomEBPVdjrXYM3DpVaDUdo3Ljz3k8aLn4Qpump",
    "name": "SOLDIER / SOL",
    "src": "new",
@@ -1508,10 +1480,11 @@
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
-    643
+    643,
+    641
    ],
    "last_age_h": 4.800000000000001,
-   "last_liq": 43295.2552,
+   "last_liq": 39970.287,
    "mint": "998oqipjzX1NfnujoBWj6KBeRP56NNUxXEmDw4rSpC4H",
    "name": "OPENAI / SOL",
    "src": "top6",
@@ -1586,11 +1559,12 @@
     253,
     506,
     463,
-    319
+    319,
+    272
    ],
-   "last_age_h": 242.39999999999998,
+   "last_age_h": 244.79999999999998,
    "last_candles": 168,
-   "last_liq": 144342.0197,
+   "last_liq": 163620.0267,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
@@ -1614,10 +1588,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 19.200000000000003,
-   "last_liq": 8543.7102,
+   "last_liq": 8573.3764,
    "mint": "8JoCihqt46TgsZ5m5fcK7XvxY8omU4HsXU7LFPgnpump",
    "name": "Chud / SOL",
    "src": "new",
@@ -1634,10 +1609,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 7.199999999999999,
-   "last_liq": 50350.7731,
+   "last_age_h": 9.600000000000001,
+   "last_liq": 50349.8886,
    "mint": "9TeTxHe2DCkUKK4RBhnRzW2trxcTstFxfHeg8rpnAwRw",
    "name": "\u725b\u6765 / SOL",
    "src": "new",
@@ -1667,31 +1643,14 @@
     38,
     196,
     42,
-    32
+    32,
+    16
    ],
    "last_age_h": 31.200000000000003,
-   "last_liq": 75817.9468,
+   "last_liq": 72076.6197,
    "mint": "BcMKCebDM3JJrSJy3WuYdvcbChri49Z1z4GoApM5pump",
    "name": "AXE / SOL",
    "src": "top9",
-   "tries": 0
-  },
-  "AQMwRNx9FRY2iLB8m9vcHWn2w2UPrq8o93eszfAAdwFC": {
-   "added": "2026-08-19T20:01:10+00:00",
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    13,
-    0,
-    0,
-    0,
-    0
-   ],
-   "last_age_h": 4.800000000000001,
-   "last_liq": 451301.9249,
-   "mint": "FytxucdvNQoXLomaJaPMwsetN4YXmcG8ko9HjJ2n1gT5",
-   "name": "SPCX / SOL",
-   "src": "new",
    "tries": 0
   },
   "AZUnPAnoEDrdcBh1mnaRqyn8qKuxCbsStD4g68s5nB7m": {
@@ -1700,10 +1659,11 @@
    "baseline_ts": null,
    "buyer_hist": [
     1,
+    0,
     0
    ],
    "last_age_h": 2.4000000000000004,
-   "last_liq": 3239.6984,
+   "last_liq": 3238.1641,
    "mint": "8ZcmiJf9MpA11sjCs66qEmpe3ksDhDsTd9Fb1ZA5pump",
    "name": "$MROK / USDC",
    "src": "new",
@@ -1736,10 +1696,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 40.8,
-   "last_liq": 99312.0296,
+   "last_liq": 98627.2699,
    "mint": "9yqCLnHp54Vr8XmyyC6krmQ16GjUYBdGXkBwsnoxiitd",
    "name": "Grok4.6 / SOL",
    "src": "top9",
@@ -1759,10 +1720,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 12.0,
-   "last_liq": 65859.3256,
+   "last_age_h": 14.399999999999999,
+   "last_liq": 66050.7645,
    "mint": "HsbhCPni1W4wkwtTpAZkV2XA9H3hmKxdhfirfQZtbonk",
    "name": "BRASFROG / SOL",
    "src": "new",
@@ -1776,10 +1738,11 @@
     3,
     3,
     0,
+    0,
     0
    ],
    "last_age_h": 4.800000000000001,
-   "last_liq": 3156.66,
+   "last_liq": 3160.877,
    "mint": "H3eRLsPzGJkS59FEExDUPbw8EgKDNa6w5SKf3GN2pump",
    "name": "hedge / USDC",
    "src": "new",
@@ -1793,10 +1756,11 @@
     7,
     7,
     0,
+    0,
     0
    ],
    "last_age_h": 4.800000000000001,
-   "last_liq": 2543.2018,
+   "last_liq": 2546.6085,
    "mint": "5nLFGPwANGdowfekiU6irrCZA98r9fY2TbfuTLCcpump",
    "name": "IIWII / SOL",
    "src": "new",
@@ -1830,10 +1794,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 43.2,
-   "last_liq": 151587.8296,
+   "last_liq": 150349.1938,
    "mint": "HBKv4DcWcwBDNewF183JadHhByj4T1f54TzbRPJB4qAP",
    "name": "SHOBON / SOL",
    "src": "top5",
@@ -1860,10 +1825,11 @@
     1,
     3,
     3,
-    1
+    1,
+    0
    ],
    "last_age_h": 24.0,
-   "last_liq": 11441.5065,
+   "last_liq": 11412.5163,
    "mint": "6ZC5kpZf9kLfxwMc4QVZfGJksTLrZQUTmKJCDaaopump",
    "name": "MEMESLY / SOL",
    "src": "new",
@@ -1883,10 +1849,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 12.0,
-   "last_liq": 26565.6935,
+   "last_age_h": 14.399999999999999,
+   "last_liq": 26714.4502,
    "mint": "82AHMuTYAGn3BvVAR7KRS7ceXxceiXxPphe7V5zX2AfE",
    "name": "NiuLai / SOL",
    "src": "new",
@@ -1897,26 +1864,13 @@
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
-    1
+    1,
+    0
    ],
    "last_age_h": 0.0,
-   "last_liq": 2522.41129172185,
+   "last_liq": 2497.4741,
    "mint": "Aqtc6t6b5LgoLkHfg1fXuxjVkJLq63LicoS6iUYcpump",
    "name": "\ud83d\ude02 / SOL",
-   "src": "new",
-   "tries": 0
-  },
-  "BCiJemmsfxPefQQpBnL3kZZ7u48GqEyt7KLcBqgjpMxU": {
-   "added": "2026-08-20T01:53:38+00:00",
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    232
-   ],
-   "last_age_h": 0.0,
-   "last_liq": 48067.0859,
-   "mint": "y4bsxznMY2QLaMRRR86tUQ3haUfoqK1mxVZLc4fpump",
-   "name": "GTAVI / SOL",
    "src": "new",
    "tries": 0
   },
@@ -1933,10 +1887,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 12.0,
-   "last_liq": 5653.3121,
+   "last_liq": 5658.1833,
    "mint": "24tCxMKu3HrK3QQWMrKnn4FqER53rVn1fkqwmBNdpump",
    "name": "mertcedes / SOL",
    "src": "new",
@@ -1965,10 +1920,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 26.400000000000002,
-   "last_liq": 24977.7555,
+   "last_liq": 25053.0833,
    "mint": "FDtyDcX47tKpnRgPduwEnffmqZFd7W7FnCpMTSQ1A8ed",
    "name": "Timmy / SOL",
    "src": "new",
@@ -1993,10 +1949,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 19.200000000000003,
-   "last_liq": 5816.8755,
+   "last_age_h": 21.6,
+   "last_liq": 5837.0015,
    "mint": "7FtQCaqgmjQLc48XUUyudngPa7DFjEGxxrWW286bpump",
    "name": "OF / USDC",
    "src": "new",
@@ -2030,13 +1987,28 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 50.400000000000006,
+   "last_age_h": 52.800000000000004,
    "last_liq": 82389.3093,
    "mint": "8Jqtq15934KJJ8N6UCvPcwh2T4PrgPx8mY45dVkuAe7j",
    "name": "XST / SOL",
    "src": "top5",
+   "tries": 0
+  },
+  "C8i2gVyvH39wJNHiSq7Qds4KKiu2DjaUDTzFayKBXgXc": {
+   "added": "2026-08-20T03:03:43+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    2677
+   ],
+   "last_age_h": 0.0,
+   "last_liq": 250455.6423,
+   "mint": "DYM6htLcJaQJFUSixnkxAuJszPnmomcc3v24ZE8wQJ33",
+   "name": "MSTR / SOL",
+   "src": "top8",
    "tries": 0
   },
   "CD5HDt23sjGud5VTWsv51BMPey2Qf9qH5cyswWmjBDdq": {
@@ -2090,11 +2062,12 @@
     484,
     393,
     455,
-    279
+    279,
+    258
    ],
    "last_age_h": 55.199999999999996,
    "last_candles": 10,
-   "last_liq": 194994.9572,
+   "last_liq": 186542.6467,
    "last_try": "2026-08-18T03:28:53+00:00",
    "mint": "zj1jpp7QMveWHLs61vL9KMZf254KvW7j4AAmBF8ry2k",
    "name": "BULLSHIT / SOL",
@@ -2109,12 +2082,27 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 4.800000000000001,
-   "last_liq": 3269.367,
+   "last_age_h": 7.199999999999999,
+   "last_liq": 3271.213,
    "mint": "561iKvSJqrL3LhUvCpRo2ixcQFY5UXdrC4vqwGccpump",
    "name": "BSF / USDC",
+   "src": "new",
+   "tries": 0
+  },
+  "CdoJ95qnBUXidWHxnbKXzG8ZAhC1dSaqDTJyYszRDgwv": {
+   "added": "2026-08-20T03:03:39+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    49
+   ],
+   "last_age_h": 0.0,
+   "last_liq": 3310.9747,
+   "mint": "7XzKuoaVJfGwL3gsUKppKoLTTU3sNGb59yLf1Jenpump",
+   "name": "ROWDY / SOL",
    "src": "new",
    "tries": 0
   },
@@ -2140,26 +2128,13 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 24.0,
-   "last_liq": 49356.4641,
+   "last_liq": 49514.9315,
    "mint": "8ff9Vcr9MyV5qmuspopDAYsRGKdvbrAr2dzYjgUnvRmA",
    "name": "\u725b\u6765 / SOL",
-   "src": "new",
-   "tries": 0
-  },
-  "Cg1ETmaVhG3YZS3pXfVbnS2puTQLYms85Ksx7Hv7ZP7j": {
-   "added": "2026-08-20T01:53:40+00:00",
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    11
-   ],
-   "last_age_h": 0.0,
-   "last_liq": 2052.4012,
-   "mint": "J1YBPQ3dW2kBoWGc7Fw9FiPLmAx4CYhFXhUDKmf5pump",
-   "name": "SOB / SOL",
    "src": "new",
    "tries": 0
   },
@@ -2181,10 +2156,11 @@
     0,
     2,
     0,
+    1,
     1
    ],
    "last_age_h": 19.200000000000003,
-   "last_liq": 14417.2941,
+   "last_liq": 14311.6241,
    "mint": "5CtD6uGSjSXj4jmGZZ3eBjymfvekinm2ksinCtaXTRiX",
    "name": "UMPALUMPA / SOL",
    "src": "new",
@@ -2217,10 +2193,11 @@
     55,
     59,
     47,
-    29
+    29,
+    17
    ],
    "last_age_h": 1644.0,
-   "last_liq": 748631.8748,
+   "last_liq": 747889.0432,
    "mint": "SPCXxcqXj6e5dJDVNovHN8744zkbhM2bYudU45BimGb",
    "name": "SPCX / USDC",
    "src": "top8",
@@ -2265,14 +2242,43 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 50.400000000000006,
+   "last_age_h": 52.800000000000004,
    "last_candles": 1,
    "last_liq": 12179.6839,
    "last_try": "2026-08-18T03:14:01+00:00",
    "mint": "DTHCqrCozdfmLP2QG1NXoGgHhqBUoKCutt7EWM8ByUR",
    "name": "WRAP / SOL",
+   "tries": 0
+  },
+  "CuDs87zsXye1TkNbPVfHUkxwjGpW5aZ81FmxjAFysLpx": {
+   "added": "2026-08-20T03:03:41+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    2363
+   ],
+   "last_age_h": 0.0,
+   "last_liq": 322553.085,
+   "mint": "HTAxp4tAezdCXnFBZjmuZHLbp8onLG9NhMnowNh1XeeA",
+   "name": "HOOD / SOL",
+   "src": "top7",
+   "tries": 0
+  },
+  "DMLg7R5d3KGLdfLYeN4Vu3q37Gu4uyBrjLfPkXAx485r": {
+   "added": "2026-08-20T03:03:37+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    4
+   ],
+   "last_age_h": 0.0,
+   "last_liq": 2100.04356732238,
+   "mint": "7tV2jFJJu38S7smGi8Y5EaE4VFkR4qxeajXFQKwnpump",
+   "name": "LION / SOL",
+   "src": "new",
    "tries": 0
   },
   "DNEU92K3wTCC7PHijX5q7R1tZMyboHjNWJnkE6wyE6tH": {
@@ -2281,6 +2287,7 @@
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
+    0,
     0,
     0,
     0,
@@ -2352,13 +2359,28 @@
     8,
     8,
     17,
-    21
+    21,
+    16
    ],
-   "last_age_h": 960.0,
-   "last_liq": 2487466.9154,
+   "last_age_h": 962.4000000000001,
+   "last_liq": 2455842.507,
    "mint": "SKHYhSjuRWHgikq8eRKbtBbpABgJSkd7ytQV14i9EQ3",
    "name": "SKHY / USDC",
    "src": "top9",
+   "tries": 0
+  },
+  "Ddsz3RUkgzEBR6AqzQk8dWDwMEDDoW7zXjHzk5dEiBJR": {
+   "added": "2026-08-20T03:03:37+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    74
+   ],
+   "last_age_h": 0.0,
+   "last_liq": 3881.6757,
+   "mint": "fQMnwzuLe2bwtEKJ1eZmDCPm9K43QL8o5htgaM7pump",
+   "name": "numographs / SOL",
+   "src": "new",
    "tries": 0
   },
   "DjvYJfRnMyMyMi5768KXVrnxGnrHT7nz5EPt9fj9kKSN": {
@@ -2387,26 +2409,27 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 57.599999999999994,
+   "last_age_h": 60.0,
    "last_liq": 546434.5679,
    "mint": "9tLmPB1xGRq6bu7SEvc61RfrKCergfLRRXHvh7CZn67m",
    "name": "AAPL / SOL",
    "src": "top3",
    "tries": 0
   },
-  "DuDWq2MvF9CRxA7xQrPHhjbTfnQ17seJn9Xup1VJH2Lj": {
-   "added": "2026-08-20T01:53:38+00:00",
+  "E3H4To39g5m31DyVUGqr7shi4m3DpXUVLngBStfam7E8": {
+   "added": "2026-08-20T03:03:37+00:00",
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
-    63
+    123
    ],
    "last_age_h": 0.0,
-   "last_liq": 3051.3737,
-   "mint": "EkSZdTY3vNHRWT83Y9rpE3hy3AUMWHdYQQMGPAixpump",
-   "name": "frens / SOL",
+   "last_liq": 13650.0697,
+   "mint": "BnhSAHEfQU1VaczcnmiqioJG1xnU7tfhX91wCkCopump",
+   "name": "Sakadung / SOL",
    "src": "new",
    "tries": 0
   },
@@ -2437,10 +2460,11 @@
     104,
     32,
     73,
-    24
+    24,
+    17
    ],
-   "last_age_h": 52.800000000000004,
-   "last_liq": 25076.771,
+   "last_age_h": 55.199999999999996,
+   "last_liq": 23818.7361,
    "mint": "9MMXQQhhMhA4yWeTuiv7dkGTeCMzKCGmfmWgVD3ghYn7",
    "name": "BOLLOCKS / SOL",
    "src": "top9",
@@ -2464,10 +2488,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 19.200000000000003,
-   "last_liq": 8637.028,
+   "last_liq": 8654.7059,
    "mint": "pkH1W14j5RxUEpMWQi5CyZRvmTQjAcvQvSLBtrLpump",
    "name": "Lively AI / USDC",
    "src": "new",
@@ -2494,10 +2519,11 @@
     256,
     285,
     380,
-    179
+    179,
+    132
    ],
-   "last_age_h": 24.0,
-   "last_liq": 64208.956,
+   "last_age_h": 26.400000000000002,
+   "last_liq": 57701.7849,
    "mint": "7g2xyrq9Fk1TvFiqqcmLJAQ9jAtfHobmrdzzM9Dp2SpV",
    "name": "CLUG / SOL",
    "src": "top6",
@@ -2531,10 +2557,11 @@
     45,
     106,
     41,
-    47
+    47,
+    27
    ],
-   "last_age_h": 55.199999999999996,
-   "last_liq": 58348.0597,
+   "last_age_h": 57.599999999999994,
+   "last_liq": 58952.706,
    "mint": "7MQSupJTpY31HGChEHUAsS1pQhLSrHS5CCsB9bnaN3eS",
    "name": "Z / SOL",
    "src": "top6",
@@ -2552,10 +2579,11 @@
     805,
     592,
     624,
-    336
+    336,
+    241
    ],
    "last_age_h": 14.399999999999999,
-   "last_liq": 66582.7451,
+   "last_liq": 67684.5774,
    "mint": "FtXH4AAgR8KMBR8zDfTfHnYdSStw2Am3iwq8TpoHpump",
    "name": "Intismeran / SOL",
    "src": "top4",
@@ -2568,10 +2596,11 @@
    "buyer_hist": [
     225,
     0,
+    0,
     0
    ],
-   "last_age_h": 2.4000000000000004,
-   "last_liq": 17100.0599,
+   "last_age_h": 4.800000000000001,
+   "last_liq": 17124.2759,
    "mint": "78BcJmTBujrEZRroBc1toV9Bg1ZTLf2JTA6kEfCEPAsh",
    "name": "ROBUX / SOL",
    "src": "new",
@@ -2585,10 +2614,11 @@
     1,
     1,
     0,
+    0,
     0
    ],
    "last_age_h": 4.800000000000001,
-   "last_liq": 2153.0069,
+   "last_liq": 2155.8831,
    "mint": "HTD9FMZByauBsHxttRCL6owNqUYaTyKzQS4nSZd4pump",
    "name": "MCGA / SOL",
    "src": "new",
@@ -2602,10 +2632,11 @@
     17,
     17,
     0,
+    0,
     0
    ],
    "last_age_h": 4.800000000000001,
-   "last_liq": 2011.5851,
+   "last_liq": 2014.2724,
    "mint": "2UnykXNdWPy4x8dbyEarGek6RanhnFf2BLYYxZ6Lpump",
    "name": "iLands / SOL",
    "src": "new",
@@ -2638,33 +2669,28 @@
     393,
     355,
     335,
-    169
+    169,
+    176
    ],
    "last_age_h": 100.80000000000001,
-   "last_liq": 274189.2062,
+   "last_liq": 260506.4058,
    "mint": "ApZuxdpzMrbEYTGEzeY9afh5pj9d6qPRJCTgQYiipbKg",
    "name": "CYBERLEEK / SOL",
    "src": "top8",
    "tries": 0
   },
-  "GB6rUJwur3S4o5WSCw2CU982HganSJKHuK17rcJAgEjn": {
-   "added": "2026-08-19T17:32:23+00:00",
+  "GDYUE3fGwCATLGHP9sfAeg7EUxrkN3MXsJFqadUeDq9B": {
+   "added": "2026-08-20T03:03:41+00:00",
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
-    1456,
-    531,
-    28,
-    2,
-    28,
-    28,
-    27
+    0
    ],
-   "last_age_h": 9.600000000000001,
-   "last_liq": 171525.5694,
-   "mint": "zn9JxhQgDfALhCp8QgmHHQXz6CATHNGH1ZkEdgiH3Lp",
-   "name": "QQ / SOL",
-   "src": "top6",
+   "last_age_h": 4.800000000000001,
+   "last_liq": 89139.6974,
+   "mint": "28RMpoDC8m129r5D1567kRPFq8TTzwea7WwZWrbG8ojs",
+   "name": "ROBUX / SOL",
+   "src": "top7",
    "tries": 0
   },
   "GKNSfEZ3TLCZLBf2aySqaLUsQerbGVQMdo8sqr9qcnQQ": {
@@ -2696,14 +2722,29 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 33.599999999999994,
    "last_candles": 1,
-   "last_liq": 7245.2122,
+   "last_liq": 7214.6289,
    "last_try": "2026-08-18T17:54:39+00:00",
    "mint": "4HKGqTLEj6ERc4JLwL561aJJ3eqAXfUrHE5WfifNpump",
    "name": "CUCK / SOL",
+   "src": "new",
+   "tries": 0
+  },
+  "GnJkbBnKCu2iY7bGn4pWbVDRu9KSsac1zaJSD8gY2oXP": {
+   "added": "2026-08-20T03:03:39+00:00",
+   "baseline": null,
+   "baseline_ts": null,
+   "buyer_hist": [
+    110
+   ],
+   "last_age_h": 0.0,
+   "last_liq": 3667.7737,
+   "mint": "6bcJ2Nti3TEL8XsUWi3b2mLioQCj8fxCN6Jfo4Aypump",
+   "name": "GLAD / SOL",
    "src": "new",
    "tries": 0
   },
@@ -2715,10 +2756,11 @@
     4,
     4,
     0,
+    0,
     0
    ],
    "last_age_h": 4.800000000000001,
-   "last_liq": 2842.9326,
+   "last_liq": 2846.7305,
    "mint": "82HLXsudtXbqBGmD3MgJiBQMDMa3repbnEoBgC66pump",
    "name": "HOWRD / SOL",
    "src": "new",
@@ -2769,11 +2811,12 @@
     9,
     39,
     18,
-    19
+    19,
+    12
    ],
-   "last_age_h": 69.6,
+   "last_age_h": 72.0,
    "last_candles": 27,
-   "last_liq": 39989.2442,
+   "last_liq": 38772.8825,
    "last_try": "2026-08-18T05:47:17+00:00",
    "mint": "2WDjdDj6W1PJpQ8ea4nXZ95VFKNko18DtGYzqUuipump",
    "name": "BILLY / SOL",
@@ -2785,6 +2828,7 @@
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
+    0,
     0,
     0,
     0,
@@ -2868,11 +2912,12 @@
     0,
     22,
     19,
+    7,
     7
    ],
-   "last_age_h": 57.599999999999994,
+   "last_age_h": 60.0,
    "last_candles": 13,
-   "last_liq": 161487.1642,
+   "last_liq": 160298.5973,
    "last_try": "2026-08-18T03:28:58+00:00",
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
@@ -2884,10 +2929,11 @@
    "baseline_ts": null,
    "buyer_hist": [
     10,
+    0,
     0
    ],
    "last_age_h": 2.4000000000000004,
-   "last_liq": 2010.588,
+   "last_liq": 2004.5043,
    "mint": "6AAUWMmdBbLWgveBWCyd6T9UykQ66Z7dCBtQgfb1qW4V",
    "name": "Chucky / SOL",
    "src": "new",
@@ -2920,10 +2966,11 @@
     97,
     178,
     131,
-    148
+    148,
+    672
    ],
    "last_age_h": 168.0,
-   "last_liq": 141594.7234,
+   "last_liq": 196873.8194,
    "mint": "EkcTa8n14fXcHdfvZqCg72cTCutJnnKb19vcHwKTpump",
    "name": "Qenis / SOL",
    "src": "top9",
@@ -2956,10 +3003,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 45.599999999999994,
-   "last_liq": 248347.5466,
+   "last_age_h": 48.0,
+   "last_liq": 247181.9744,
    "mint": "AN4ewr44DhCetZ4d3FYavzWenuAtES3gVMukQ9rrSoui",
    "name": "AMZN / SOL",
    "src": "top8",
@@ -2970,10 +3018,11 @@
    "baseline": null,
    "baseline_ts": null,
    "buyer_hist": [
-    3
+    3,
+    0
    ],
    "last_age_h": 0.0,
-   "last_liq": 2287.8504,
+   "last_liq": 2272.3543,
    "mint": "EfhQmGZA9ZH4VtXWeupzwcJ64VcSgDXk6EGJcekspump",
    "name": "Bilibili / SOL",
    "src": "new",
@@ -3004,10 +3053,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
-   "last_age_h": 28.799999999999997,
-   "last_liq": 26816.8652,
+   "last_age_h": 31.200000000000003,
+   "last_liq": 26711.1683,
    "mint": "9sK24m1RUKV7ppD3Ni6FWCgtzHxsEpiLWDonHnSKBAGS",
    "name": "TONY / SOL",
    "src": "new",
@@ -3040,10 +3090,11 @@
     33,
     94,
     52,
-    16
+    16,
+    51
    ],
    "last_age_h": 57.599999999999994,
-   "last_liq": 191319.1063,
+   "last_liq": 164069.5295,
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
    "src": "top8",
@@ -3064,10 +3115,11 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 14.399999999999999,
-   "last_liq": 314876.7337,
+   "last_liq": 316607.3285,
    "mint": "FD8Xq26M1tQYBYTojmP8ANWTiiohVuBkebyVWmPrpump",
    "name": "degenjourn / SOL",
    "src": "new",
@@ -3093,32 +3145,13 @@
     0,
     0,
     0,
+    0,
     0
    ],
    "last_age_h": 21.6,
-   "last_liq": 14509.266,
+   "last_liq": 14549.9053,
    "mint": "2cKHZkMQVViwK59XtMA9y6iEL73B8DGhrrwAghYupump",
    "name": "RABMON / SOL",
-   "src": "new",
-   "tries": 0
-  },
-  "x8NiV9ZbydHB4vfjWS4eZVv82yotnKTceVMF82az5bX": {
-   "added": "2026-08-19T17:32:19+00:00",
-   "baseline": null,
-   "baseline_ts": null,
-   "buyer_hist": [
-    6,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0
-   ],
-   "last_age_h": 7.199999999999999,
-   "last_liq": 2094.8411,
-   "mint": "EVAQziXw2RpjRVwL2baqswSMadCVDjn4Run6aSjJpump",
-   "name": "CLAUDE / SOL",
    "src": "new",
    "tries": 0
   }
