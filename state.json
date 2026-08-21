@@ -2,7 +2,7 @@
  "alert_day": "2026-08-21",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 365,
+ "credits_used": 366,
  "hot_list": [
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
   "3vzCDcWV1gWExDYtd2YGtoAD1wvMNv9ceiGzFs7ZrnpM",
@@ -532,11 +532,12 @@
     31,
     87,
     44,
-    40
+    40,
+    45
    ],
    "last_age_h": 81.6,
    "last_candles": 54,
-   "last_liq": 316957.1053,
+   "last_liq": 310241.7572,
    "last_try": "2026-08-20T00:01:05+00:00",
    "mint": "zj1jpp7QMveWHLs61vL9KMZf254KvW7j4AAmBF8ry2k",
    "name": "BULLSHIT / SOL",
@@ -1910,11 +1911,12 @@
     90,
     80,
     56,
-    64
+    64,
+    51
    ],
    "last_age_h": 271.20000000000005,
    "last_candles": 168,
-   "last_liq": 140934.5567,
+   "last_liq": 141759.2632,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
@@ -2560,11 +2562,12 @@
     159,
     571,
     576,
-    228
+    228,
+    309
    ],
    "last_age_h": 81.6,
    "last_candles": 10,
-   "last_liq": 222962.2356,
+   "last_liq": 216340.0606,
    "last_try": "2026-08-18T03:28:53+00:00",
    "mint": "zj1jpp7QMveWHLs61vL9KMZf254KvW7j4AAmBF8ry2k",
    "name": "BULLSHIT / SOL",
