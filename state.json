@@ -2,14 +2,13 @@
  "alert_day": "2026-08-21",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 384,
+ "credits_used": 385,
  "hot_list": [
   "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5",
-  "68C62WPYiiNZxprbuaMj2ULXpiTDKcs5xsX7kBGnyajR",
+  "CD5HDt23sjGud5VTWsv51BMPey2Qf9qH5cyswWmjBDdq",
   "2C7PaLGC7wtQZWR9wa7QT2bthqTDyzcBL6BEYFGdSA5e",
   "3vzCDcWV1gWExDYtd2YGtoAD1wvMNv9ceiGzFs7ZrnpM",
   "5Jm4GnWPt62kphmhEET6rjzzFjvsfNxNqdpEuGwp2U9q",
-  "CD5HDt23sjGud5VTWsv51BMPey2Qf9qH5cyswWmjBDdq",
   "GwTzkbi3ogqYSphVeSMGaBwdkBvEzBo87dmDWyCxd1aj"
  ],
  "last_alert": {
@@ -104,11 +103,12 @@
     11,
     5,
     1,
+    11,
     11
    ],
    "last_age_h": 1437.6,
    "last_candles": 168,
-   "last_liq": 4146436.6688,
+   "last_liq": 4154613.113,
    "last_try": "2026-08-19T21:31:57+00:00",
    "mint": "MUxEsUKSMACyw5fZf68wxf5FLnZVhtU9CwH8uNNGay1",
    "name": "MU / USDC",
@@ -219,11 +219,12 @@
     208,
     151,
     148,
-    136
+    136,
+    140
    ],
    "last_age_h": 91.19999999999999,
    "last_candles": 55,
-   "last_liq": 74548.6018,
+   "last_liq": 76649.346,
    "last_try": "2026-08-19T22:44:37+00:00",
    "mint": "7fDdLy2rmQKsPCkqUXEd1mN7yDfEzArc4VrctWmfkJBK",
    "name": "Z500 / SOL",
@@ -588,11 +589,12 @@
     39,
     44,
     31,
-    29
+    29,
+    36
    ],
    "last_age_h": 88.80000000000001,
    "last_candles": 54,
-   "last_liq": 300799.4739,
+   "last_liq": 336236.7317,
    "last_try": "2026-08-20T00:01:05+00:00",
    "mint": "zj1jpp7QMveWHLs61vL9KMZf254KvW7j4AAmBF8ry2k",
    "name": "BULLSHIT / SOL",
@@ -1064,11 +1066,12 @@
     109,
     84,
     75,
-    60
+    60,
+    57
    ],
-   "last_age_h": 91.19999999999999,
+   "last_age_h": 93.6,
    "last_candles": 62,
-   "last_liq": 133016.241,
+   "last_liq": 138132.0279,
    "last_try": "2026-08-20T04:55:14+00:00",
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
@@ -1349,11 +1352,12 @@
     106,
     67,
     51,
-    51
+    51,
+    29
    ],
    "last_age_h": 348.0,
    "last_candles": 168,
-   "last_liq": 249722.3571,
+   "last_liq": 271142.539,
    "last_try": "2026-08-18T03:28:51+00:00",
    "mint": "HxQhDGYqyjorgogMJx7YbBHADEDxuHhLnMMmr6VYpyn",
    "name": "MANLET / SOL",
@@ -2813,11 +2817,12 @@
     199,
     295,
     231,
-    178
+    178,
+    294
    ],
    "last_age_h": 88.80000000000001,
    "last_candles": 10,
-   "last_liq": 242797.6473,
+   "last_liq": 254924.2564,
    "last_try": "2026-08-18T03:28:53+00:00",
    "mint": "zj1jpp7QMveWHLs61vL9KMZf254KvW7j4AAmBF8ry2k",
    "name": "BULLSHIT / SOL",
@@ -3820,11 +3825,12 @@
     2,
     2,
     4,
-    3
+    3,
+    6
    ],
-   "last_age_h": 103.19999999999999,
+   "last_age_h": 105.60000000000001,
    "last_candles": 27,
-   "last_liq": 43655.5069,
+   "last_liq": 44722.0557,
    "last_try": "2026-08-18T05:47:17+00:00",
    "mint": "2WDjdDj6W1PJpQ8ea4nXZ95VFKNko18DtGYzqUuipump",
    "name": "BILLY / SOL",
