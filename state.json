@@ -2,11 +2,8 @@
  "alert_day": "2026-08-21",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 404,
- "hot_list": [
-  "2C7PaLGC7wtQZWR9wa7QT2bthqTDyzcBL6BEYFGdSA5e",
-  "68C62WPYiiNZxprbuaMj2ULXpiTDKcs5xsX7kBGnyajR"
- ],
+ "credits_used": 405,
+ "hot_list": [],
  "last_alert": {
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo": 1787182804.997324
  },
@@ -237,11 +234,12 @@
     237,
     149,
     97,
-    228
+    228,
+    83
    ],
-   "last_age_h": 98.39999999999999,
+   "last_age_h": 100.80000000000001,
    "last_candles": 55,
-   "last_liq": 82035.9887,
+   "last_liq": 80180.9354,
    "last_try": "2026-08-19T22:44:37+00:00",
    "mint": "7fDdLy2rmQKsPCkqUXEd1mN7yDfEzArc4VrctWmfkJBK",
    "name": "Z500 / SOL",
@@ -1467,11 +1465,12 @@
     55,
     62,
     83,
-    50
+    50,
+    77
    ],
    "last_age_h": 355.20000000000005,
    "last_candles": 168,
-   "last_liq": 302219.9611,
+   "last_liq": 300717.6251,
    "last_try": "2026-08-18T03:28:51+00:00",
    "mint": "HxQhDGYqyjorgogMJx7YbBHADEDxuHhLnMMmr6VYpyn",
    "name": "MANLET / SOL",
