@@ -2,9 +2,8 @@
  "alert_day": "2026-08-22",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 439,
+ "credits_used": 440,
  "hot_list": [
-  "2C7PaLGC7wtQZWR9wa7QT2bthqTDyzcBL6BEYFGdSA5e",
   "GwTzkbi3ogqYSphVeSMGaBwdkBvEzBo87dmDWyCxd1aj"
  ],
  "last_alert": {
@@ -272,11 +271,12 @@
     128,
     124,
     95,
-    65
+    65,
+    61
    ],
-   "last_age_h": 110.39999999999999,
+   "last_age_h": 112.80000000000001,
    "last_candles": 55,
-   "last_liq": 98364.2561,
+   "last_liq": 97582.3563,
    "last_try": "2026-08-19T22:44:37+00:00",
    "mint": "7fDdLy2rmQKsPCkqUXEd1mN7yDfEzArc4VrctWmfkJBK",
    "name": "Z500 / SOL",
@@ -4782,11 +4782,12 @@
     10,
     10,
     8,
-    7
+    7,
+    4
    ],
-   "last_age_h": 122.39999999999999,
+   "last_age_h": 124.80000000000001,
    "last_candles": 27,
-   "last_liq": 46833.9322,
+   "last_liq": 47172.759,
    "last_try": "2026-08-18T05:47:17+00:00",
    "mint": "2WDjdDj6W1PJpQ8ea4nXZ95VFKNko18DtGYzqUuipump",
    "name": "BILLY / SOL",
