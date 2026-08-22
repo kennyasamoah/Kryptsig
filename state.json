@@ -2,11 +2,8 @@
  "alert_day": "2026-08-22",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 461,
- "hot_list": [
-  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
-  "2C7PaLGC7wtQZWR9wa7QT2bthqTDyzcBL6BEYFGdSA5e"
- ],
+ "credits_used": 462,
+ "hot_list": [],
  "last_alert": {
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo": 1787182804.997324
  },
@@ -293,11 +290,12 @@
     86,
     59,
     52,
-    77
+    77,
+    79
    ],
    "last_age_h": 117.60000000000001,
    "last_candles": 55,
-   "last_liq": 99343.3259,
+   "last_liq": 91602.1834,
    "last_try": "2026-08-19T22:44:37+00:00",
    "mint": "7fDdLy2rmQKsPCkqUXEd1mN7yDfEzArc4VrctWmfkJBK",
    "name": "Z500 / SOL",
@@ -2825,11 +2823,12 @@
     44,
     19,
     22,
-    32
+    32,
+    22
    ],
    "last_age_h": 302.4,
    "last_candles": 168,
-   "last_liq": 160274.4756,
+   "last_liq": 155637.0756,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
