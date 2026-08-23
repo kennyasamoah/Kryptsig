@@ -2,11 +2,9 @@
  "alert_day": "2026-08-23",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 565,
+ "credits_used": 566,
  "hot_list": [
-  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
-  "5Jm4GnWPt62kphmhEET6rjzzFjvsfNxNqdpEuGwp2U9q",
-  "HZp4qwbMUCdwj6ATZCpUZCKeAhBZmWSwj7kLMgYA6Ztg"
+  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo"
  ],
  "last_alert": {
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo": 1787182804.997324
@@ -1893,11 +1891,12 @@
     55,
     41,
     36,
-    80
+    80,
+    49
    ],
    "last_age_h": 148.8,
    "last_candles": 62,
-   "last_liq": 123023.4293,
+   "last_liq": 120698.1005,
    "last_try": "2026-08-20T04:55:14+00:00",
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
@@ -3743,11 +3742,12 @@
     52,
     102,
     112,
-    67
+    67,
+    80
    ],
-   "last_age_h": 333.6,
+   "last_age_h": 336.0,
    "last_candles": 168,
-   "last_liq": 169156.3422,
+   "last_liq": 172404.1614,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
@@ -7143,11 +7143,12 @@
     7,
     3,
     3,
-    10
+    10,
+    3
    ],
    "last_age_h": 148.8,
    "last_candles": 13,
-   "last_liq": 84752.8624,
+   "last_liq": 83205.2379,
    "last_try": "2026-08-18T03:28:58+00:00",
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
