@@ -2,12 +2,11 @@
  "alert_day": "2026-08-23",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 519,
+ "credits_used": 520,
  "hot_list": [
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
-  "2C7PaLGC7wtQZWR9wa7QT2bthqTDyzcBL6BEYFGdSA5e",
-  "5Jm4GnWPt62kphmhEET6rjzzFjvsfNxNqdpEuGwp2U9q",
   "68C62WPYiiNZxprbuaMj2ULXpiTDKcs5xsX7kBGnyajR",
+  "5Jm4GnWPt62kphmhEET6rjzzFjvsfNxNqdpEuGwp2U9q",
   "HZp4qwbMUCdwj6ATZCpUZCKeAhBZmWSwj7kLMgYA6Ztg"
  ],
  "last_alert": {
@@ -342,11 +341,12 @@
     58,
     45,
     140,
-    50
+    50,
+    35
    ],
    "last_age_h": 136.8,
    "last_candles": 55,
-   "last_liq": 77208.158,
+   "last_liq": 76990.4335,
    "last_try": "2026-08-19T22:44:37+00:00",
    "mint": "7fDdLy2rmQKsPCkqUXEd1mN7yDfEzArc4VrctWmfkJBK",
    "name": "Z500 / SOL",
@@ -1689,11 +1689,12 @@
     164,
     75,
     120,
-    65
+    65,
+    62
    ],
    "last_age_h": 136.8,
    "last_candles": 62,
-   "last_liq": 120887.6538,
+   "last_liq": 121597.5445,
    "last_try": "2026-08-20T04:55:14+00:00",
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
@@ -2120,11 +2121,12 @@
     41,
     31,
     14,
-    31
+    31,
+    32
    ],
-   "last_age_h": 391.20000000000005,
+   "last_age_h": 393.59999999999997,
    "last_candles": 168,
-   "last_liq": 294373.9615,
+   "last_liq": 296783.3143,
    "last_try": "2026-08-18T03:28:51+00:00",
    "mint": "HxQhDGYqyjorgogMJx7YbBHADEDxuHhLnMMmr6VYpyn",
    "name": "MANLET / SOL",
@@ -3335,11 +3337,12 @@
     135,
     80,
     86,
-    131
+    131,
+    39
    ],
    "last_age_h": 321.6,
    "last_candles": 168,
-   "last_liq": 179014.7297,
+   "last_liq": 186921.9633,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
@@ -6361,11 +6364,12 @@
     29,
     14,
     12,
-    20
+    20,
+    23
    ],
    "last_age_h": 136.8,
    "last_candles": 13,
-   "last_liq": 89107.6382,
+   "last_liq": 85347.95,
    "last_try": "2026-08-18T03:28:58+00:00",
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
