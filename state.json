@@ -2,12 +2,8 @@
  "alert_day": "2026-08-23",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 548,
- "hot_list": [
-  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
-  "68C62WPYiiNZxprbuaMj2ULXpiTDKcs5xsX7kBGnyajR",
-  "GwTzkbi3ogqYSphVeSMGaBwdkBvEzBo87dmDWyCxd1aj"
- ],
+ "credits_used": 549,
+ "hot_list": [],
  "last_alert": {
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo": 1787182804.997324
  },
@@ -2286,11 +2282,12 @@
     31,
     38,
     33,
-    76
+    76,
+    69
    ],
    "last_age_h": 400.79999999999995,
    "last_candles": 168,
-   "last_liq": 285681.5544,
+   "last_liq": 282943.4215,
    "last_try": "2026-08-18T03:28:51+00:00",
    "mint": "HxQhDGYqyjorgogMJx7YbBHADEDxuHhLnMMmr6VYpyn",
    "name": "MANLET / SOL",
@@ -3597,11 +3594,12 @@
     41,
     86,
     105,
-    50
+    50,
+    42
    ],
    "last_age_h": 331.20000000000005,
    "last_candles": 168,
-   "last_liq": 187670.0635,
+   "last_liq": 185662.1068,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
@@ -6614,11 +6612,12 @@
     13,
     14,
     10,
-    7
+    7,
+    4
    ],
    "last_age_h": 158.39999999999998,
    "last_candles": 27,
-   "last_liq": 47706.2154,
+   "last_liq": 47247.023,
    "last_try": "2026-08-18T05:47:17+00:00",
    "mint": "2WDjdDj6W1PJpQ8ea4nXZ95VFKNko18DtGYzqUuipump",
    "name": "BILLY / SOL",
