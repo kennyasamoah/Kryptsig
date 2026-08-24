@@ -2,15 +2,13 @@
  "alert_day": "2026-08-24",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 581,
- "hot_list": [
-  "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5"
- ],
+ "credits_used": 582,
+ "hot_list": [],
  "last_alert": {
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo": 1787182804.997324
  },
  "last_full_scan": 1787541032.3559492,
- "last_heartbeat": 1787457835.074312,
+ "last_heartbeat": 1787544497.3300087,
  "last_mature": 73,
  "next_page": 3,
  "pools": {
@@ -154,11 +152,12 @@
     0,
     4,
     12,
-    2
+    2,
+    0
    ],
-   "last_age_h": 1500.0,
+   "last_age_h": 1502.4,
    "last_candles": 168,
-   "last_liq": 4029577.0919,
+   "last_liq": 4011923.1482,
    "last_try": "2026-08-19T21:31:57+00:00",
    "mint": "MUxEsUKSMACyw5fZf68wxf5FLnZVhtU9CwH8uNNGay1",
    "name": "MU / USDC",
