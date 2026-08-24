@@ -2,7 +2,7 @@
  "alert_day": "2026-08-24",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 597,
+ "credits_used": 598,
  "hot_list": [
   "68C62WPYiiNZxprbuaMj2ULXpiTDKcs5xsX7kBGnyajR"
  ],
@@ -2554,11 +2554,12 @@
     8,
     49,
     41,
+    21,
     21
    ],
-   "last_age_h": 417.59999999999997,
+   "last_age_h": 420.0,
    "last_candles": 168,
-   "last_liq": 233991.2921,
+   "last_liq": 223980.5664,
    "last_try": "2026-08-18T03:28:51+00:00",
    "mint": "HxQhDGYqyjorgogMJx7YbBHADEDxuHhLnMMmr6VYpyn",
    "name": "MANLET / SOL",
