@@ -2,7 +2,7 @@
  "alert_day": "2026-08-25",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 685,
+ "credits_used": 686,
  "hot_list": [
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo"
  ],
@@ -4860,11 +4860,12 @@
     209,
     125,
     94,
-    90
+    90,
+    117
    ],
    "last_age_h": 384.0,
    "last_candles": 168,
-   "last_liq": 122777.089,
+   "last_liq": 124103.4951,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
