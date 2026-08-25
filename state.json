@@ -2,11 +2,8 @@
  "alert_day": "2026-08-25",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 650,
- "hot_list": [
-  "HZp4qwbMUCdwj6ATZCpUZCKeAhBZmWSwj7kLMgYA6Ztg",
-  "GwTzkbi3ogqYSphVeSMGaBwdkBvEzBo87dmDWyCxd1aj"
- ],
+ "credits_used": 651,
+ "hot_list": [],
  "last_alert": {
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo": 1787182804.997324
  },
@@ -8377,11 +8374,12 @@
     59,
     8,
     3,
-    7
+    7,
+    6
    ],
    "last_age_h": 196.79999999999998,
    "last_candles": 27,
-   "last_liq": 41809.1048,
+   "last_liq": 41190.1011,
    "last_try": "2026-08-18T05:47:17+00:00",
    "mint": "2WDjdDj6W1PJpQ8ea4nXZ95VFKNko18DtGYzqUuipump",
    "name": "BILLY / SOL",
@@ -8683,11 +8681,12 @@
     13,
     9,
     0,
-    11
+    11,
+    20
    ],
-   "last_age_h": 182.39999999999998,
+   "last_age_h": 184.8,
    "last_candles": 13,
-   "last_liq": 98802.8199,
+   "last_liq": 92889.3875,
    "last_try": "2026-08-18T03:28:58+00:00",
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
