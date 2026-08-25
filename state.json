@@ -2,13 +2,10 @@
  "alert_day": "2026-08-25",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 669,
+ "credits_used": 670,
  "hot_list": [
   "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5",
-  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
-  "5Jm4GnWPt62kphmhEET6rjzzFjvsfNxNqdpEuGwp2U9q",
-  "HZp4qwbMUCdwj6ATZCpUZCKeAhBZmWSwj7kLMgYA6Ztg",
-  "GwTzkbi3ogqYSphVeSMGaBwdkBvEzBo87dmDWyCxd1aj"
+  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo"
  ],
  "last_alert": {
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo": 1787182804.997324
@@ -191,11 +188,12 @@
     3,
     7,
     2,
-    18
+    18,
+    11
    ],
-   "last_age_h": 1536.0,
+   "last_age_h": 1538.3999999999999,
    "last_candles": 168,
-   "last_liq": 3956999.6716,
+   "last_liq": 3936652.6537,
    "last_try": "2026-08-19T21:31:57+00:00",
    "mint": "MUxEsUKSMACyw5fZf68wxf5FLnZVhtU9CwH8uNNGay1",
    "name": "MU / USDC",
@@ -2383,11 +2381,12 @@
     29,
     19,
     30,
-    67
+    67,
+    21
    ],
    "last_age_h": 192.0,
    "last_candles": 62,
-   "last_liq": 109909.6074,
+   "last_liq": 109183.5541,
    "last_try": "2026-08-20T04:55:14+00:00",
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
@@ -4719,11 +4718,12 @@
     20,
     16,
     122,
-    56
+    56,
+    23
    ],
    "last_age_h": 376.79999999999995,
    "last_candles": 168,
-   "last_liq": 144223.5391,
+   "last_liq": 148939.2923,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
@@ -8711,11 +8711,12 @@
     3,
     1,
     0,
-    5
+    5,
+    1
    ],
    "last_age_h": 204.0,
    "last_candles": 27,
-   "last_liq": 38929.2806,
+   "last_liq": 38698.8383,
    "last_try": "2026-08-18T05:47:17+00:00",
    "mint": "2WDjdDj6W1PJpQ8ea4nXZ95VFKNko18DtGYzqUuipump",
    "name": "BILLY / SOL",
@@ -9029,11 +9030,12 @@
     7,
     3,
     10,
-    7
+    7,
+    3
    ],
    "last_age_h": 192.0,
    "last_candles": 13,
-   "last_liq": 96256.3227,
+   "last_liq": 95566.381,
    "last_try": "2026-08-18T03:28:58+00:00",
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
