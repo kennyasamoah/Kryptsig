@@ -2,12 +2,10 @@
  "alert_day": "2026-08-25",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 643,
+ "credits_used": 644,
  "hot_list": [
   "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5",
-  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
-  "2C7PaLGC7wtQZWR9wa7QT2bthqTDyzcBL6BEYFGdSA5e",
-  "HZp4qwbMUCdwj6ATZCpUZCKeAhBZmWSwj7kLMgYA6Ztg"
+  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo"
  ],
  "last_alert": {
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo": 1787182804.997324
@@ -180,11 +178,12 @@
     13,
     5,
     14,
-    9
+    9,
+    13
    ],
    "last_age_h": 1526.4,
    "last_candles": 168,
-   "last_liq": 3918032.5824,
+   "last_liq": 3952471.3953,
    "last_try": "2026-08-19T21:31:57+00:00",
    "mint": "MUxEsUKSMACyw5fZf68wxf5FLnZVhtU9CwH8uNNGay1",
    "name": "MU / USDC",
@@ -455,11 +454,12 @@
     18,
     34,
     55,
-    25
+    25,
+    24
    ],
-   "last_age_h": 180.0,
+   "last_age_h": 182.39999999999998,
    "last_candles": 55,
-   "last_liq": 81879.015,
+   "last_liq": 81886.2398,
    "last_try": "2026-08-19T22:44:37+00:00",
    "mint": "7fDdLy2rmQKsPCkqUXEd1mN7yDfEzArc4VrctWmfkJBK",
    "name": "Z500 / SOL",
@@ -4473,11 +4473,12 @@
     29,
     22,
     134,
-    18
+    18,
+    21
    ],
    "last_age_h": 367.20000000000005,
    "last_candles": 168,
-   "last_liq": 155207.4504,
+   "last_liq": 157805.8994,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
@@ -8547,11 +8548,12 @@
     17,
     14,
     9,
-    13
+    13,
+    9
    ],
-   "last_age_h": 180.0,
+   "last_age_h": 182.39999999999998,
    "last_candles": 13,
-   "last_liq": 90781.7799,
+   "last_liq": 94024.7504,
    "last_try": "2026-08-18T03:28:58+00:00",
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
