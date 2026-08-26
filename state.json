@@ -2,9 +2,8 @@
  "alert_day": "2026-08-26",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 708,
+ "credits_used": 709,
  "hot_list": [
-  "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5",
   "HZp4qwbMUCdwj6ATZCpUZCKeAhBZmWSwj7kLMgYA6Ztg"
  ],
  "last_alert": {
@@ -201,11 +200,12 @@
     8,
     5,
     0,
-    6
+    6,
+    0
    ],
    "last_age_h": 1552.8000000000002,
    "last_candles": 168,
-   "last_liq": 3956536.5384,
+   "last_liq": 3948295.5246,
    "last_try": "2026-08-19T21:31:57+00:00",
    "mint": "MUxEsUKSMACyw5fZf68wxf5FLnZVhtU9CwH8uNNGay1",
    "name": "MU / USDC",
@@ -9722,11 +9722,12 @@
     25,
     3,
     8,
-    7
+    7,
+    16
    ],
-   "last_age_h": 206.39999999999998,
+   "last_age_h": 208.79999999999998,
    "last_candles": 13,
-   "last_liq": 65701.612,
+   "last_liq": 71225.7301,
    "last_try": "2026-08-18T03:28:58+00:00",
    "mint": "RmtMAYVTTFv2iK9muMrXEoAnSSsZPPgRPbqZCKwNDYk",
    "name": "EYE / SOL",
