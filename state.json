@@ -1,8 +1,8 @@
 {
- "alert_day": "2026-08-25",
+ "alert_day": "2026-08-26",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 693,
+ "credits_used": 694,
  "hot_list": [
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo",
   "GwTzkbi3ogqYSphVeSMGaBwdkBvEzBo87dmDWyCxd1aj"
@@ -4932,11 +4932,12 @@
     117,
     89,
     275,
-    122
+    122,
+    104
    ],
    "last_age_h": 386.40000000000003,
    "last_candles": 168,
-   "last_liq": 113687.5108,
+   "last_liq": 114679.9463,
    "last_try": "2026-08-18T08:18:00+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
@@ -9113,11 +9114,12 @@
     5,
     16,
     17,
-    8
+    8,
+    6
    ],
-   "last_age_h": 211.20000000000002,
+   "last_age_h": 213.60000000000002,
    "last_candles": 27,
-   "last_liq": 35040.8732,
+   "last_liq": 34859.6061,
    "last_try": "2026-08-18T05:47:17+00:00",
    "mint": "2WDjdDj6W1PJpQ8ea4nXZ95VFKNko18DtGYzqUuipump",
    "name": "BILLY / SOL",
