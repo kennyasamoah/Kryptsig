@@ -1119,7 +1119,7 @@ def next_chain(state):
     return CHAINS[i]
 
 
-def discover(state):
+def discover(state, pages_only_new=False):
     """Wider intake. MOMO -- a week-old token with 1,428 holders that ran
     from $170k to $836k -- was never sampled, because one page of new_pools
     plus one rotating page is ~40 pools out of thousands. The gates were
@@ -1129,6 +1129,7 @@ def discover(state):
     (established names that could still wake up). 5 calls instead of 2.
     """
     added = 0
+    chain = next_chain(state)
 
     def admit(payload, src):
         nonlocal added
@@ -1149,6 +1150,7 @@ def discover(state):
                 state["pools"][addr] = {"name": m["name"], "baseline": None,
                                         "baseline_ts": None, "tries": 0,
                                         "added": now_iso(), "src": src,
+                                        "chain": chain,
                                         "last_liq": m["liquidity"],
                                         "last_age_h": m["age_days"] * 24,
                                         "mint": extract_mint(pool)}
@@ -1170,10 +1172,16 @@ def discover(state):
                 print(f"  + {m['name'][:28]:<28} ${m['liquidity']:>9,.0f} liq"
                       f"  {m['age_days']*24:>5.1f}h  [{src}]")
 
-    for page in (1, 2):
+    pages = (1,) if pages_only_new else (1, 2)
+    for page in pages:
         if len(state["pools"]) >= UNIVERSE_CAP:
             break
-        admit(get(f"/networks/{NET}/new_pools", f"?page={page}"), "new")
+        admit(get(f"/networks/{chain}/new_pools", f"?page={page}"), "new")
+
+    # Paused mode stops here: one call, fresh tokens only. The pond stays a
+    # live browsing feed even while backfill drains the baseline backlog.
+    if pages_only_new:
+        return added
 
     # Rotate three pages per run through the top-by-volume list, so the whole
     # list is covered every few scans rather than every eight.
@@ -1181,11 +1189,12 @@ def discover(state):
     for _ in range(3):
         if len(state["pools"]) >= UNIVERSE_CAP:
             break
-        admit(get(f"/networks/{NET}/pools",
+        admit(get(f"/networks/{chain}/pools",
                   f"?page={page}&sort=h24_volume_usd_desc"), f"top{page}")
         page = page + 1 if page < 10 else 1
     state["next_page"] = page
-
+    if added:
+        print(f"  ({chain})")
     return added
 
 
@@ -1831,6 +1840,48 @@ def main():
         print(f"\n{len(rows)} row(s) in {JOURNAL_FILE}")
         return
 
+    if "--fresh" in sys.argv:
+        # The pond is an alert watchlist AND a browsing feed. --pond answers
+        # "what can alert?"; this answers "what just showed up and is moving?"
+        # Both pond-sourced wins came from browsing, and one was 0.0h old --
+        # a token that could never have had a baseline.
+        i = sys.argv.index("--fresh")
+        n = int(sys.argv[i + 1]) if len(sys.argv) > i + 1 else 25
+        if not os.path.exists(ADMIT_LOG):
+            print(f"No {ADMIT_LOG} yet -- run a full scan first.")
+            return
+        with open(ADMIT_LOG) as fh:
+            rows = list(csv.DictReader(fh))
+        rows.sort(key=lambda r: r.get("ts", ""), reverse=True)
+        rows = rows[:n]
+        print(f"\n{len(rows)} most recent admissions\n" + "=" * 104)
+        print(f"{'admitted':<12} {'age':>5} {'liq':>10} {'mcap':>10} "
+              f"{'vol24':>10} {'turn':>5} {'buy/sell':>9} {'tier':>4}  name")
+        print("-" * 104)
+        for r in rows:
+            try:
+                liq = float(r.get("liquidity") or 0)
+                mc  = float(r.get("mcap") or 0)
+                v24 = float(r.get("vol_24h") or 0)
+                b   = int(float(r.get("buyers_1h") or 0))
+                sl  = int(float(r.get("sellers_1h") or 0))
+                age = float(r.get("age_hours") or 0)
+                turn = v24 / liq if liq else 0
+            except ValueError:
+                continue
+            print(f"{r.get('ts','')[5:16].replace('T',' '):<12} "
+                  f"{age:>4.1f}h ${liq:>9,.0f} ${mc:>9,.0f} ${v24:>9,.0f} "
+                  f"{turn:>5.1f} {b:>4}/{sl:<4} {r.get('tier',''):>4}  "
+                  f"{r.get('name','')[:24]}")
+        print("-" * 104)
+        print("turn = 24h volume / liquidity. Higher means the pool actually")
+        print("trades. buy/sell is unique wallets in the hour at admission.")
+        print("\nFull addresses:")
+        for r in rows:
+            print(f"  {r.get('name','')[:22]:<22} {r.get('mint','') or r.get('pool','')}")
+        print()
+        return
+
     if "--pond" in sys.argv:
         st = load_json(STATE_FILE, {})
         pools = st.get("pools", {})
@@ -1949,6 +2000,15 @@ def main():
     if not dry and full_scan and not discovering:
         print(f"discovery PAUSED: {backlog} baselines pending "
               f"(resume under {BACKLOG_PAUSE}) -- spending calls on backfill\n")
+
+    # Even when paused, keep ONE new_pools call alive. The pond is not only an
+    # alert watchlist -- it is the feed you browse, and both pond-sourced wins
+    # came from browsing, not alerts. Sakadung was 0.0h old, so it could never
+    # have had a baseline. Starving discovery to fix the alert path kills the
+    # path actually in use.
+    if not dry and full_scan and not discovering:
+        added = discover(state, pages_only_new=True)
+        print(f"  (fresh intake only: +{added})\n")
 
     if not dry and discovering:
         added = discover(state)
