@@ -2,16 +2,16 @@ name: kryptsig
 
 on:
   schedule:
-    - cron: "*/15 * * * *"   # one cron; the script picks FULL vs HOT
+    - cron: "*/15 * * * *"
   workflow_dispatch:
     inputs:
       mode:
-        description: "run = poll | selftest = check dependencies | audit = check one token"
+        description: "run | selftest | audit | pond | fresh | log | curve | graduating"
         type: choice
         default: run
-        options: [run, selftest, audit, pond, log, curve, graduating]
+        options: [run, selftest, audit, pond, fresh, log, curve, graduating]
       address:
-        description: "Token address (audit and log modes)"
+        description: "Token mint (audit and log modes)"
         type: string
         required: false
       field:
@@ -60,21 +60,20 @@ jobs:
         if: inputs.mode == 'curve'
         env:
           BITQUERY_TOKEN: ${{ secrets.BITQUERY_TOKEN }}
-        run: |
-          if [ -z "${{ inputs.address }}" ]; then
-            echo "curve mode needs a token mint in address"; exit 1
-          fi
-          python kryptsig.py --curve "${{ inputs.address }}"
+        run: python kryptsig.py --curve "${{ inputs.address }}"
 
       - name: Journal entry
         if: inputs.mode == 'log'
         run: |
           if [ -z "${{ inputs.address }}" ] || [ -z "${{ inputs.field }}" ]; then
-            echo "log mode needs address and field"
-            exit 1
+            echo "log mode needs address and field"; exit 1
           fi
           python kryptsig.py --log "${{ inputs.address }}" \
             "${{ inputs.field }}" "${{ inputs.value }}" "${{ inputs.note }}"
+
+      - name: Fresh admissions
+        if: inputs.mode == 'fresh'
+        run: python kryptsig.py --fresh 30
 
       - name: Show pond
         if: inputs.mode == 'pond'
@@ -83,12 +82,10 @@ jobs:
       - name: Audit token
         if: inputs.mode == 'audit'
         env:
-          RUGCHECK_API_KEY: ${{ secrets.RUGCHECK_API_KEY }}
           CG_API_KEY: ${{ secrets.CG_API_KEY }}
         run: |
           if [ -z "${{ inputs.address }}" ]; then
-            echo "No address supplied. Re-run and paste a token address."
-            exit 1
+            echo "audit mode needs an address"; exit 1
           fi
           python kryptsig.py --audit "${{ inputs.address }}"
 
@@ -100,36 +97,22 @@ jobs:
         run: python kryptsig.py
 
       - name: Persist state and logs
-        if: always() && (inputs.mode == '' || inputs.mode == 'run' || inputs.mode == 'log' || inputs.mode == 'curve')
+        if: always() && (inputs.mode == '' || inputs.mode == 'run' || inputs.mode == 'log')
         run: |
           set -e
           git config user.name  "kryptsig"
           git config user.email "actions@github.com"
-
-          # NOTE: `git add a b c` fails and stages NOTHING if any path is
-          # missing. On the first run observations.csv and alerts.csv do not
-          # exist yet, so listing them by name silently staged nothing.
           git add -A
-
           if git diff --staged --quiet; then
-            echo "nothing to commit"
-            exit 0
+            echo "nothing to commit"; exit 0
           fi
-
           git commit -m "poll $(date -u +%FT%TZ)"
-
           pushed=0
           for i in 1 2 3; do
-            if git pull --rebase --autostash && git push; then
-              pushed=1
-              break
-            fi
-            echo "push attempt $i failed, retrying"
-            sleep 5
+            if git pull --rebase --autostash && git push; then pushed=1; break; fi
+            echo "push attempt $i failed, retrying"; sleep 5
           done
-
           if [ "$pushed" -ne 1 ]; then
-            echo "PUSH FAILED after 3 attempts -- state was NOT saved"
-            exit 1
+            echo "PUSH FAILED after 3 attempts -- state was NOT saved"; exit 1
           fi
           echo "state persisted"
