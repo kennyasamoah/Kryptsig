@@ -112,6 +112,9 @@ SLIPPAGE_ASSUMED   = 0.01      # each side, tier-adjusted below
 
 MAX_ALERTS_PER_DAY = 3         # $750 of correlated exposure is the ceiling
 HEARTBEAT_HOURS    = 24        # prove the system is alive even when silent
+REMIND_EVERY_HOURS = 12        # outcome nudges repeat at most twice a day.
+                               # Hourly repeats turn a useful notification
+                               # into something you learn to swipe away.
 
 # The ceiling is our single biggest untested assumption. Log what it rejects
 # so the log can refute it.
@@ -155,7 +158,12 @@ if CG_KEY:
 else:
     GT = "https://api.geckoterminal.com/api/v2"
 
-NET  = "solana"
+# Multi-chain. GeckoTerminal exposes identical endpoints per network, so the
+# only real cost is API calls. Discovery rotates ONE chain per full scan,
+# which keeps the per-run budget flat instead of multiplying it. Each pool
+# remembers the chain it lives on so polling and backfill hit the right path.
+CHAINS = ["solana", "base", "bsc"]
+NET  = "solana"          # default for single-chain helpers (audit, curve)
 PACE = 1.5 if CG_KEY else 7.0     # keyless is ~10 calls/min
 MAX_RETRIES = 4
 
@@ -498,6 +506,63 @@ def bq_graduating(lo_pct=70.0, hi_pct=99.5, limit=40):
         })
     tokens.sort(key=lambda x: -x["progress"])
     return tokens, None
+
+
+def creator_profile(mint):
+    """Who deployed this, and how many tokens have they launched?
+
+    A first-time deployer and someone on their fortieth launch are very
+    different counterparties. RugCheck exposes both, and unlike a chart it
+    is a fact rather than a claim.
+
+    Returns (dict, error). Note the limit: deploy COUNT is available, but
+    whether those prior tokens rugged or ran is not -- that would need
+    outcome data on every one of them.
+    """
+    rep, err = rc_get(f"/tokens/{mint}/report")
+    if err or not isinstance(rep, dict):
+        return None, err or "bad shape"
+
+    ctok = dig(rep, "creatorTokens")
+    n_created = len(ctok) if isinstance(ctok, list) else ctok
+    creator = dig(rep, "creator") or ""
+
+    # Structural flags that ARE available pre-graduation
+    risks = dig(rep, "risks", default=[]) or []
+    danger = [dig(r, "name", default="?") for r in risks
+              if str(dig(r, "level", default="")).lower()
+              in ("danger", "high", "critical")]
+
+    return {
+        "creator": creator,
+        "n_created": n_created if isinstance(n_created, int) else None,
+        "rugged": dig(rep, "rugged") is True,
+        "danger": danger,
+        "insider_nets": len(dig(rep, "insiderNetworks", default=[]) or []),
+        "launchpad": dig(rep, "launchpad") or dig(rep, "deployPlatform") or "",
+    }, None
+
+
+def creator_read(p):
+    """Turn a deploy count into a one-word read. Serial deployment cuts both
+    ways -- a rug factory and a prolific legitimate launcher look identical
+    on count alone -- so this flags for attention, it does not condemn."""
+    if not p:
+        return "?", ""
+    if p.get("rugged"):
+        return "RUGGED", "flagged as rugged by rugcheck"
+    if p.get("danger"):
+        return "DANGER", "; ".join(p["danger"])[:40]
+    n = p.get("n_created")
+    if n is None:
+        return "?", "deploy count not reported"
+    if n >= 20:
+        return "FACTORY", f"{n} tokens deployed -- assembly line"
+    if n >= 5:
+        return "SERIAL", f"{n} tokens deployed"
+    if n <= 1:
+        return "FIRST", "first token from this wallet"
+    return "FEW", f"{n} tokens deployed"
 
 
 def classify_fill(pct_per_hour):
@@ -999,6 +1064,13 @@ def is_equity(name):
     return False
 
 
+# Liquidity alone admits corpses: 95 of 106 pools never got a baseline,
+# because an hourly candle only exists if trades happened that hour. A pool
+# holding $50k that trades $400/day is not a candidate, it is a wasted slot.
+WATCH_MIN_VOL24  = 8_000     # dollars traded in 24h
+WATCH_MIN_TURN   = 0.25      # 24h volume / liquidity -- does it actually move?
+WATCH_MIN_BUYERS = 15        # unique buyers in the last hour
+
 WATCH_MIN_LIQ = 2_000    # new_pools median liquidity is ~$2k. This is the
                          # launch firehose; we admit cheaply and evict fast.
 # Eviction is trajectory-based. new_pools tokens start near $2k; reaching the
@@ -1016,6 +1088,16 @@ def admissible(m):
         return False, f"liquidity ${m['liquidity']:,.0f} < ${WATCH_MIN_LIQ:,}"
     if m["mcap"] and m["mcap"] > MAX_MCAP:
         return False, f"mcap ${m['mcap']:,.0f} too large"
+
+    # Liquidity says money is parked. Volume says people are trading.
+    # Only the second predicts whether a baseline will ever exist.
+    if m["vol_24h"] < WATCH_MIN_VOL24:
+        return False, f"24h volume ${m['vol_24h']:,.0f} -- barely trades"
+    turn = (m["vol_24h"] / m["liquidity"]) if m["liquidity"] else 0
+    if turn < WATCH_MIN_TURN:
+        return False, f"turnover {turn:.2f}x liquidity -- stagnant"
+    if m["buyers"] < WATCH_MIN_BUYERS:
+        return False, f"{m['buyers']} buyers in 1h -- no participation"
     return True, "admitted"
 
 
@@ -1029,6 +1111,12 @@ def qualifies(m):
     if m["mcap"] > MAX_MCAP:
         return False, f"mcap ${m['mcap']:,.0f} too large"
     return True, "qualifies"
+
+
+def next_chain(state):
+    i = state.get("chain_idx", 0) % len(CHAINS)
+    state["chain_idx"] = (i + 1) % len(CHAINS)
+    return CHAINS[i]
 
 
 def discover(state):
@@ -1598,9 +1686,18 @@ def main():
         print(f"{seen_before}/{len(rows)} seen in a previous run "
               f"(velocity needs two sightings)\n")
 
-        print(f"{'prog':>6} {'vel/hr':>9} {'read':<12} {'pooled':>9} "
-              f"{'n':>3}  {'symbol':<12}  mint")
-        print("-" * 100)
+        # One RugCheck call per token. Free, but paced -- so cap it.
+        print("checking creators...", end="", flush=True)
+        for r_ in rows[:12]:
+            prof, perr = creator_profile(r_["mint"])
+            r_["prof"] = prof
+            r_["perr"] = perr
+            print(".", end="", flush=True)
+        print("\n")
+
+        print(f"{'prog':>6} {'vel/hr':>9} {'fill':<12} {'creator':<9} "
+              f"{'pooled':>9}  {'symbol':<12}  mint")
+        print("-" * 108)
         for r_ in rows:
             vel = r_.get("velocity")
             kind, _ = classify_fill(vel)
@@ -1609,15 +1706,30 @@ def main():
                 kind = r_["vel_why"][:12]
             elif vel is not None and r_.get("gap_h"):
                 kind = f"{kind} {r_['gap_h']:.1f}h"[:12]
-            print(f"{r_['progress']:>5.1f}% {vtxt:>9} {kind:<12} "
-                  f"${r_['quote_usd']:>8,.0f} {r_['samples']:>3}  "
+            cread, cnote = creator_read(r_.get("prof"))
+            print(f"{r_['progress']:>5.1f}% {vtxt:>9} {kind:<12} {cread:<9} "
+                  f"${r_['quote_usd']:>8,.0f}  "
                   f"{str(r_['symbol'])[:12]:<12}  {r_['mint']}")
+            if cnote and cread in ("RUGGED", "DANGER", "FACTORY"):
+                print(f"{'':>44}^ {cnote}")
+            p_ = r_.get("prof") or {}
+            if p_.get("insider_nets"):
+                print(f"{'':>44}^ {p_['insider_nets']} insider network(s)")
         print("-" * 100)
         print(f"{len(rows)} unique token(s).")
         print()
         print("  ORGANIC     hours to fill -- independent buyers")
         print("  COORDINATED sub-hour fill -- a few wallets; they exit at graduation")
         print("  STALLING    barely moving -- most curves die here")
+        print()
+        print("  creator:  FIRST  first token from that wallet")
+        print("            FEW    2-4 tokens deployed")
+        print("            SERIAL 5-19 -- worth a closer look")
+        print("            FACTORY 20+ -- assembly line")
+        print("            DANGER/RUGGED  rugcheck flagged it")
+        print("  NOTE: deploy COUNT is available; whether those prior tokens")
+        print("  rugged or ran is not. A prolific legitimate launcher and a")
+        print("  rug factory look identical on count alone.")
         print("  vel needs 2+ samples (n); '--' means only one snapshot in range")
         print()
         print("  ONE query. Check your Bitquery dashboard for the point cost")
@@ -1914,8 +2026,14 @@ def main():
     # liquidity refreshed so prune() can evict the ones that never grow, and
     # their buyer history has to start accumulating before they mature.
     watched = list(state["pools"].keys()) if full_scan else hot[:HOT_MAX]
-    batches = ([fixture] if dry
-               else [watched[i:i+30] for i in range(0, len(watched), 30)])
+    # The multi endpoint is per-network, so group by each pool's own chain.
+    by_chain = {}
+    for a in watched:
+        by_chain.setdefault(state["pools"][a].get("chain", NET), []).append(a)
+    batches = ([("dry", fixture)] if dry
+               else [(c, g[i:i+30])
+                     for c, g in by_chain.items()
+                     for i in range(0, len(g), 30)])
 
     alerts, logged, evaluated, liq_seen = 0, 0, 0, {}
     day = stamp[:10]
@@ -1923,11 +2041,11 @@ def main():
         state["alert_day"], state["alerts_today"] = day, 0
     today_alerts = state.get("alerts_today", 0)
 
-    for batch in batches:
+    for chain_name, batch in batches:
         if dry:
             records = [(p["address"], p["attributes"], p) for p in batch]
         else:
-            data = get(f"/networks/{NET}/pools/multi/{','.join(batch)}")
+            data = get(f"/networks/{chain_name}/pools/multi/{','.join(batch)}")
             records = [((p.get("attributes") or {}).get("address"),
                         p.get("attributes") or {}, p)
                        for p in ((data or {}).get("data") or [])]
@@ -2083,11 +2201,17 @@ def main():
             print(f"  ! outcome check: {e}")
 
     if due:
-        lines = "\n".join(f"{n[:24]} ({w})" for n, w in due[:6])
         print(f"\n{len(due)} outcome(s) due to be logged")
-        notify(f"{len(due)} outcome(s) due",
-               f"Alerts waiting on results:\n{lines}\n\n"
-               f"Actions -> mode: log")
+        last_remind = state.get("last_reminder", 0)
+        if (time.time() - last_remind) >= REMIND_EVERY_HOURS * 3600:
+            state["last_reminder"] = time.time()
+            lines = "\n".join(f"{n[:24]} ({w})" for n, w in due[:6])
+            notify(f"{len(due)} outcome(s) due",
+                   f"Alerts waiting on results:\n{lines}\n\n"
+                   f"Actions -> mode: log")
+        else:
+            hrs = REMIND_EVERY_HOURS - (time.time() - last_remind) / 3600
+            print(f"  (reminder suppressed, next in {hrs:.1f}h)")
 
     # Silence is the expected output. Without a heartbeat, a dead workflow
     # and a quiet market look identical.
