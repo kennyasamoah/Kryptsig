@@ -1955,6 +1955,12 @@ def main():
         print(f"discovery: page {state.get('next_page', 1) - 1 or 8}, "
               f"+{added} (tracking {len(state['pools'])})\n")
 
+    # BACKFILL RUNS ON EVERY FULL SCAN, not only when discovering. Nesting it
+    # under the discovery branch meant pausing discovery -- the change meant
+    # to FREE calls for backfill -- switched backfill off entirely. Symptom:
+    # "discovery PAUSED ... spending calls on backfill" followed by zero
+    # backfill lines and 3 total API calls.
+    if not dry and full_scan:
         # Young pools cannot produce a baseline (too few candles) and by
         # design do not burn their retry budget -- so in insertion order they
         # occupy every backfill slot forever and starve the mature pools that
