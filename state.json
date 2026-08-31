@@ -2,12 +2,10 @@
  "alert_day": "2026-08-31",
  "alerts_today": 0,
  "credit_month": "2026-08",
- "credits_used": 807,
+ "credits_used": 808,
  "hot_list": [
   "GwTzkbi3ogqYSphVeSMGaBwdkBvEzBo87dmDWyCxd1aj",
-  "13MEx6gjRadJNUdmToaGSzgeWHLH7FzScUQS9Mc5nYF5",
-  "68C62WPYiiNZxprbuaMj2ULXpiTDKcs5xsX7kBGnyajR",
-  "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo"
+  "68C62WPYiiNZxprbuaMj2ULXpiTDKcs5xsX7kBGnyajR"
  ],
  "last_alert": {
   "9R27f7ibnqi9jfk5LdWHRhX7faJBPPZyr5Va35RYWwoo": 1787182804.997324
@@ -237,11 +235,12 @@
     0,
     15,
     9,
-    11
+    11,
+    6
    ],
    "last_age_h": 1687.1999999999998,
    "last_candles": 168,
-   "last_liq": 3994628.4396,
+   "last_liq": 3997486.2829,
    "last_try": "2026-08-19T21:31:57+00:00",
    "mint": "MUxEsUKSMACyw5fZf68wxf5FLnZVhtU9CwH8uNNGay1",
    "name": "MU / USDC",
@@ -3845,11 +3844,12 @@
     14,
     36,
     36,
+    54,
     54
    ],
    "last_age_h": 597.5999999999999,
    "last_candles": 168,
-   "last_liq": 165846.0468,
+   "last_liq": 158938.2902,
    "last_try": "2026-08-31T20:50:22+00:00",
    "mint": "HxQhDGYqyjorgogMJx7YbBHADEDxuHhLnMMmr6VYpyn",
    "name": "MANLET / SOL",
@@ -6110,11 +6110,12 @@
     2,
     3,
     8,
-    4
+    4,
+    3
    ],
    "last_age_h": 525.5999999999999,
    "last_candles": 168,
-   "last_liq": 108481.2365,
+   "last_liq": 108466.9711,
    "last_try": "2026-08-31T20:50:24+00:00",
    "mint": "9sfCHMLWSVy6MD6zr7pR1gD3qbT7C6K1E3dMf2ZBpump",
    "name": "LAYOOO / SOL",
@@ -11353,11 +11354,12 @@
     2,
     1,
     2,
+    2,
     2
    ],
    "last_age_h": 352.79999999999995,
    "last_candles": 168,
-   "last_liq": 31853.4052,
+   "last_liq": 31891.8661,
    "last_try": "2026-08-31T20:50:27+00:00",
    "mint": "2WDjdDj6W1PJpQ8ea4nXZ95VFKNko18DtGYzqUuipump",
    "name": "BILLY / SOL",
